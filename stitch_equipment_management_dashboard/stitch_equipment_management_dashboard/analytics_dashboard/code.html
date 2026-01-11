@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>LLM Agent Performance Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                        "success": "#50E3C2",
+                        "warning": "#F5A623",
+                        "error": "#D0021B",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body class="font-display bg-background-light dark:bg-background-dark text-[#333333] dark:text-gray-200">
+<div class="relative flex h-auto min-h-screen w-full flex-col">
+<div class="layout-container flex h-full grow flex-col">
+<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-gray-200 dark:border-gray-700 bg-white dark:bg-background-dark/80 px-6 sm:px-10 py-3 sticky top-0 z-10 backdrop-blur-sm">
+<div class="flex items-center gap-4 text-gray-800 dark:text-white">
+<div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-white shadow-sm">
+<span class="text-sm font-bold tracking-tight">Eq</span>
+</div>
+<h2 class="text-lg font-bold leading-tight tracking-[-0.015em]">Equiptalk.ai</h2>
+</div>
+<div class="hidden md:flex items-center gap-9">
+<a class="text-sm font-semibold text-primary" href="#">Dashboard</a>
+<a class="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary" href="#">Equipment</a>
+<a class="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary" href="#">Agents</a>
+<a class="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary" href="#">Incidents</a>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+</span>
+<span class="text-sm font-medium text-gray-600 dark:text-gray-300">Agent Online</span>
+</div>
+<button class="flex h-10 w-10 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" data-alt="User profile picture" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDpqhkUII6imYBNXQ_tC2fVKezNp9wBFqvFKWZvIhM_BFwQ2v2rbOxLDwXg9-pApQa-Xr_ZTGqBhDZvE8NSqMCLEVhYtEjpc7InGuODI61zdPPe_Dp4fNbfbteoFyDIBxur57u7sxMvSHjoIGBPyWaNvOghhiVUSffuiDBLMjt9o8CpQ7zfywwVsylwifsbuu4Dxm0wkrvRQtckxgVqRiZf2cv1ja_7dWfCPMakrbgYR7x23kPUUe7IlSpQidVobor3hJJjW1ftSp32");'></div>
+</div>
+</header>
+<main class="flex-1 px-4 sm:px-6 md:px-10 py-8">
+<div class="mx-auto max-w-7xl">
+<div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+<h1 class="text-3xl font-black text-gray-900 dark:text-white tracking-[-0.033em]">LLM Agent Performance Dashboard</h1>
+<div class="flex flex-wrap gap-2">
+<button class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 pl-4 pr-3 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
+<span>Last 30 Days</span>
+<span class="material-symbols-outlined">expand_more</span>
+</button>
+<button class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-primary pl-4 pr-3 text-sm font-medium text-white hover:bg-primary/90">
+<span>Export Report</span>
+<span class="material-symbols-outlined">download</span>
+</button>
+</div>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+<div class="flex flex-col gap-2 rounded-xl p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+<p class="text-base font-medium text-gray-500 dark:text-gray-400">Total Chats</p>
+<p class="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">1,204</p>
+<p class="text-base font-medium text-green-500">+5% vs. last period</p>
+</div>
+<div class="flex flex-col gap-2 rounded-xl p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+<p class="text-base font-medium text-gray-500 dark:text-gray-400">New Issues Raised</p>
+<p class="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">86</p>
+<p class="text-base font-medium text-green-500">+2% vs. last period</p>
+</div>
+<div class="flex flex-col gap-2 rounded-xl p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+<p class="text-base font-medium text-gray-500 dark:text-gray-400">Issues Resolved</p>
+<p class="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">75</p>
+<p class="text-base font-medium text-red-500">-1% vs. last period</p>
+</div>
+<div class="flex flex-col gap-2 rounded-xl p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+<p class="text-base font-medium text-gray-500 dark:text-gray-400">Average User Rating</p>
+<p class="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">4.2 / 5</p>
+<p class="text-base font-medium text-green-500">+0.1 vs. last period</p>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+<div class="lg:col-span-2 flex flex-col gap-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6">
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+<div>
+<p class="text-lg font-semibold text-gray-900 dark:text-white">Chat Volume Over Time</p>
+<p class="text-sm text-gray-500 dark:text-gray-400">Daily interactions over the last 30 days</p>
+</div>
+<div class="flex items-center gap-4 mt-2 sm:mt-0">
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-full bg-primary"></div>
+<span class="text-sm font-medium text-gray-600 dark:text-gray-300">This Period</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-full bg-gray-300 dark:bg-gray-600"></div>
+<span class="text-sm font-medium text-gray-600 dark:text-gray-300">Previous Period</span>
+</div>
+</div>
+</div>
+<div class="flex min-h-[300px] flex-1 flex-col justify-end">
+<svg class="w-full h-full" fill="none" preserveAspectRatio="none" viewBox="0 0 478 150" width="100%" xmlns="http://www.w3.org/2000/svg">
+<path d="M0 109C18.1538 109 18.1538 21 36.3077 21C54.4615 21 54.4615 41 72.6154 41C90.7692 41 90.7692 93 108.923 93C127.077 93 127.077 33 145.231 33C163.385 33 163.385 101 181.538 101C199.692 101 199.692 61 217.846 61C236 61 236 45 254.154 45C272.308 45 272.308 121 290.462 121C308.615 121 308.615 149 326.769 149C344.923 149 344.923 1 363.077 1C381.231 1 381.231 81 399.385 81C417.538 81 417.538 129 435.692 129C453.846 129 453.846 25 472 25" stroke="#137fec" stroke-linecap="round" stroke-width="3"></path>
+<path class="dark:stroke-gray-600" d="M0 132C18.1538 132 18.1538 64 36.3077 64C54.4615 64 54.4615 84 72.6154 84C90.7692 84 90.7692 126 108.923 126C127.077 126 127.077 76 145.231 76C163.385 76 163.385 134 181.538 134C199.692 134 199.692 104 217.846 104C236 104 236 88 254.154 88C272.308 88 272.308 144 290.462 144C308.615 144 308.615 149 326.769 149C344.923 149 344.923 54 363.077 54C381.231 54 381.231 124 399.385 124C417.538 124 417.538 149 435.692 149C453.846 149 453.846 78 472 78" stroke="#CFD8E3" stroke-dasharray="4 4" stroke-linecap="round" stroke-width="3"></path>
+</svg>
+<div class="flex justify-between mt-2 border-t border-gray-200 dark:border-gray-700 pt-2">
+<p class="text-xs font-medium text-gray-500 dark:text-gray-400">Week 1</p>
+<p class="text-xs font-medium text-gray-500 dark:text-gray-400">Week 2</p>
+<p class="text-xs font-medium text-gray-500 dark:text-gray-400">Week 3</p>
+<p class="text-xs font-medium text-gray-500 dark:text-gray-400">Week 4</p>
+</div>
+</div>
+</div>
+<div class="flex flex-col gap-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6">
+<div>
+<p class="text-lg font-semibold text-gray-900 dark:text-white">User Feedback Sentiment</p>
+<p class="text-sm text-gray-500 dark:text-gray-400">Based on 256 ratings</p>
+</div>
+<div class="flex flex-1 items-center justify-center min-h-[300px] relative">
+<svg class="w-full h-full" viewBox="0 0 36 36">
+<path class="stroke-gray-200 dark:stroke-gray-700" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke-width="3"></path>
+<path class="stroke-green-500" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke-dasharray="75, 100" stroke-width="3"></path>
+<path class="stroke-yellow-500" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke-dasharray="15, 100" stroke-dashoffset="-75" stroke-width="3"></path>
+<path class="stroke-red-500" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke-dasharray="10, 100" stroke-dashoffset="-90" stroke-width="3"></path>
+</svg>
+<div class="absolute flex flex-col items-center justify-center">
+<span class="text-3xl font-bold text-gray-900 dark:text-white">75%</span>
+<span class="text-base font-medium text-gray-500 dark:text-gray-400">Positive</span>
+</div>
+</div>
+<div class="flex justify-around border-t border-gray-200 dark:border-gray-700 pt-4">
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-full bg-green-500"></div>
+<span class="text-sm font-medium text-gray-600 dark:text-gray-300">Positive</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+<span class="text-sm font-medium text-gray-600 dark:text-gray-300">Neutral</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-full bg-red-500"></div>
+<span class="text-sm font-medium text-gray-600 dark:text-gray-300">Negative</span>
+</div>
+</div>
+</div>
+</div>
+<div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 overflow-x-auto">
+<div class="mb-4 flex items-center justify-between">
+<h3 class="text-lg font-semibold text-gray-900 dark:text-white">Recently Raised Issues</h3>
+<a class="text-sm font-semibold text-primary hover:underline" href="#">View All</a>
+</div>
+<table class="w-full text-left text-sm">
+<thead class="border-b border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 uppercase tracking-wider text-xs">
+<tr>
+<th class="py-3 px-4 font-medium">Issue ID</th>
+<th class="py-3 px-4 font-medium">Description</th>
+<th class="py-3 px-4 font-medium">Equipment</th>
+<th class="py-3 px-4 font-medium">Timestamp</th>
+<th class="py-3 px-4 font-medium">Status</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+<tr>
+<td class="py-4 px-4 font-medium text-gray-900 dark:text-white">#8214</td>
+<td class="py-4 px-4 text-gray-600 dark:text-gray-300">Incorrect pressure readings</td>
+<td class="py-4 px-4 text-gray-600 dark:text-gray-300">Compressor C-101</td>
+<td class="py-4 px-4 text-gray-600 dark:text-gray-300">2023-10-27 10:45 AM</td>
+<td class="py-4 px-4">
+<span class="inline-flex items-center rounded-full bg-yellow-100 dark:bg-yellow-900/50 px-2.5 py-0.5 text-xs font-semibold text-yellow-800 dark:text-yellow-300">Pending</span>
+</td>
+</tr>
+<tr>
+<td class="py-4 px-4 font-medium text-gray-900 dark:text-white">#8213</td>
+<td class="py-4 px-4 text-gray-600 dark:text-gray-300">Agent provided wrong maintenance date</td>
+<td class="py-4 px-4 text-gray-600 dark:text-gray-300">Pump P-205</td>
+<td class="py-4 px-4 text-gray-600 dark:text-gray-300">2023-10-27 09:12 AM</td>
+<td class="py-4 px-4">
+<span class="inline-flex items-center rounded-full bg-green-100 dark:bg-green-900/50 px-2.5 py-0.5 text-xs font-semibold text-green-800 dark:text-green-300">Resolved</span>
+</td>
+</tr>
+<tr>
+<td class="py-4 px-4 font-medium text-gray-900 dark:text-white">#8211</td>
+<td class="py-4 px-4 text-gray-600 dark:text-gray-300">Cannot find documentation for HX-300</td>
+<td class="py-4 px-4 text-gray-600 dark:text-gray-300">Heat Exchanger HX-300</td>
+<td class="py-4 px-4 text-gray-600 dark:text-gray-300">2023-10-26 03:20 PM</td>
+<td class="py-4 px-4">
+<span class="inline-flex items-center rounded-full bg-red-100 dark:bg-red-900/50 px-2.5 py-0.5 text-xs font-semibold text-red-800 dark:text-red-300">Unresolved</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</main>
+</div>
+</div>
+</body></html>

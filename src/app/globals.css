@@ -1,0 +1,36 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/forms";
+@plugin "@tailwindcss/container-queries";
+
+:root {
+  --background-light: #f6f7f8;
+  --background-dark: #101922;
+  --primary: #137fec;
+  --foreground: #171717;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground: #ededed;
+  }
+}
+
+@theme inline {
+  --color-background-light: var(--background-light);
+  --color-background-dark: var(--background-dark);
+  --color-primary: var(--primary);
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --color-foreground: var(--foreground);
+}
+
+body {
+  font-family: var(--font-sans);
+}
+
+.material-symbols-outlined {
+  font-variation-settings:
+    'FILL' 0,
+    'wght' 400,
+    'GRAD' 0,
+    'opsz' 24
+}

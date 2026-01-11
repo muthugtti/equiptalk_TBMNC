@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Login &amp; Registration Page</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-[#212529] dark:text-gray-300">
+<div class="relative flex min-h-screen w-full flex-col group/design-root overflow-x-hidden">
+<div class="layout-container flex h-full grow flex-col">
+<div class="flex flex-1 justify-center">
+<div class="layout-content-container flex flex-col w-full flex-1">
+<div class="grid grid-cols-1 lg:grid-cols-2 min-h-screen">
+<!-- Left Panel: Branding -->
+<div class="relative hidden lg:flex flex-col gap-6 px-10 py-10 bg-gray-100 dark:bg-background-dark/50 justify-center items-center">
+<div class="absolute top-8 left-8 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-3xl">hub</span>
+<span class="text-xl font-bold text-gray-800 dark:text-white">EquipAI</span>
+</div>
+<div class="w-full max-w-lg bg-center bg-no-repeat aspect-square bg-contain" data-alt="Abstract graphic representing network connections and data processing" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuC1JSOLk7msMVKZkVeRxnuQQTJhGOW-WJN8WB3u36FNMJG3TyXbj2QkRmy4Zjv49Gifj03NzWTcBi1kf_md3H0MyGXtzD_pLsNp1bcBxguzRdVntlRfniGSkBR4q5eMCzFt6kK--l_7mUTvsW7oQwehmfSQNoTzehfIZQ7S-OXx_TV7_aDPnmqeUwaLDNjuRvoeZLroMC7jxIYAAw6w0ezGMNmI0GjmGqBcRIsQlDURwGioBlepoAPge78mUZE9OVNccGthQVffndn-"); opacity: 0.2; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); height: 80%; width: 80%;'></div>
+<div class="z-10 flex flex-col gap-6 text-center max-w-md">
+<div class="flex flex-col gap-2">
+<h1 class="text-gray-900 dark:text-white text-4xl font-black leading-tight tracking-tight">
+                                        Intelligent Equipment Management, Powered by AI
+                                    </h1>
+<h2 class="text-gray-600 dark:text-gray-400 text-base font-normal leading-normal">
+                                        Access your dashboard to manage equipment, create AI agents, and gain insights from your data.
+                                    </h2>
+</div>
+</div>
+</div>
+<!-- Right Panel: Form -->
+<div class="flex flex-1 flex-col justify-center items-center py-10 px-4 sm:px-6 lg:px-8 bg-background-light dark:bg-background-dark">
+<div class="w-full max-w-md space-y-8">
+<!-- Tabs -->
+<div>
+<div class="flex border-b border-gray-200 dark:border-gray-700 gap-8">
+<a class="flex flex-col items-center justify-center border-b-[3px] border-b-primary text-gray-900 dark:text-white pb-[13px] pt-4" href="#">
+<p class="text-sm font-bold leading-normal tracking-wide">Sign In</p>
+</a>
+<a class="flex flex-col items-center justify-center border-b-[3px] border-b-transparent text-gray-500 dark:text-gray-400 pb-[13px] pt-4" href="#">
+<p class="text-sm font-bold leading-normal tracking-wide">Create Account</p>
+</a>
+</div>
+</div>
+<!-- Headline -->
+<h1 class="text-gray-900 dark:text-white tracking-tight text-3xl font-bold leading-tight text-left">Welcome Back</h1>
+<form action="#" class="mt-8 space-y-6" method="POST">
+<div class="space-y-4 rounded-md">
+<!-- Email Field -->
+<div class="flex flex-col">
+<label class="text-gray-800 dark:text-gray-300 text-sm font-medium leading-normal pb-2" for="email-address">Email / Username</label>
+<input autocomplete="email" class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-gray-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-gray-300 dark:border-gray-600 bg-background-light dark:bg-gray-800/50 h-12 placeholder:text-gray-500 dark:placeholder:text-gray-500 px-4 text-sm font-normal leading-normal" id="email-address" name="email" placeholder="Enter your email or username" required="" type="email"/>
+</div>
+<!-- Password Field -->
+<div class="flex flex-col">
+<div class="flex items-center justify-between">
+<label class="text-gray-800 dark:text-gray-300 text-sm font-medium leading-normal pb-2" for="password">Password</label>
+<a class="text-sm font-medium text-primary hover:text-primary/80" href="#">
+                                                    Forgot Password?
+                                                </a>
+</div>
+<div class="relative flex w-full flex-1 items-stretch rounded-lg">
+<input autocomplete="current-password" class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-gray-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-gray-300 dark:border-gray-600 bg-background-light dark:bg-gray-800/50 h-12 placeholder:text-gray-500 dark:placeholder:text-gray-500 p-4 rounded-r-none border-r-0 pr-2 text-sm font-normal leading-normal" id="password" name="password" placeholder="Enter your password" required="" type="password"/>
+<div class="text-gray-500 dark:text-gray-400 flex border border-gray-300 dark:border-gray-600 bg-background-light dark:bg-gray-800/50 items-center justify-center pr-4 rounded-r-lg border-l-0 cursor-pointer">
+<span class="material-symbols-outlined text-xl">visibility</span>
+</div>
+</div>
+</div>
+</div>
+<!-- CTA Button -->
+<div>
+<button class="group relative flex w-full justify-center rounded-lg border border-transparent bg-primary py-3 px-4 text-sm font-bold text-white hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-background-dark" type="submit">
+                                            Sign In
+                                        </button>
+</div>
+<!-- Secondary Link -->
+<div class="text-center text-sm">
+<span class="text-gray-600 dark:text-gray-400">Don't have an account?</span>
+<a class="font-medium text-primary hover:text-primary/80" href="#">
+                                            Sign Up
+                                        </a>
+</div>
+</form>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</body></html>

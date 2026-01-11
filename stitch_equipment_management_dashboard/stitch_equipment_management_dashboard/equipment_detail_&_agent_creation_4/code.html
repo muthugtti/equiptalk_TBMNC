@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Incidents Management - Equiptalk.ai</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+        darkMode: "class",
+        theme: {
+            extend: {
+                colors: {
+                    "primary": "#4A90E2",
+                    "secondary": "#333333",
+                    "accent": "#50E3C2",
+                    "background-light": "#F4F7FA",
+                    "background-dark": "#101922",
+                    "card-light": "#FFFFFF",
+                    "card-dark": "#1A242E",
+                    "text-light": "#333333",
+                    "text-dark": "#E0E0E0",
+                    "subtext-light": "#6b7280",
+                    "subtext-dark": "#9ca3af",
+                    "border-light": "#E0E0E0",
+                    "border-dark": "#374151"
+                },
+                fontFamily: {
+                    "display": ["Inter", "sans-serif"]
+                },
+                borderRadius: {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+                },
+            },
+        },
+    }
+    </script>
+<style>
+    .material-symbols-outlined {
+        font-variation-settings:
+            'FILL' 0,
+            'wght' 400,
+            'GRAD' 0,
+            'opsz' 24
+    }
+    </style>
+</head>
+<body class="font-display bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark">
+<div class="relative flex h-auto min-h-screen w-full flex-col">
+<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-border-light dark:border-border-dark px-4 sm:px-6 lg:px-8 py-3 bg-card-light dark:bg-card-dark sticky top-0 z-50 shadow-sm">
+<div class="flex items-center gap-3 text-secondary dark:text-text-dark">
+<div class="flex h-8 w-8 items-center justify-center rounded bg-primary text-white text-sm font-bold shadow-sm">
+        Eq
+    </div>
+<h2 class="text-lg font-bold tracking-tight">Equiptalk.ai</h2>
+</div>
+<nav class="hidden md:flex items-center gap-8">
+<a class="text-sm font-medium hover:text-primary dark:hover:text-primary" href="#">Dashboard</a>
+<a class="text-sm font-medium hover:text-primary dark:hover:text-primary" href="#">Equipment</a>
+<a class="text-sm font-medium hover:text-primary dark:hover:text-primary" href="#">Agents</a>
+<a class="text-sm font-medium text-primary dark:text-primary border-b-2 border-primary pb-1" href="#">Incidents</a>
+</nav>
+<div class="flex items-center gap-4">
+<button class="flex cursor-pointer items-center justify-center rounded-full h-10 w-10 bg-background-light dark:bg-background-dark text-secondary dark:text-text-dark hover:bg-primary/10 dark:hover:bg-primary/20">
+<span class="material-symbols-outlined text-xl">notifications</span>
+</button>
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" data-alt="User profile picture" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAPkXCrx8Q0Ix0q5Ky75ALycsNmaxYb2F58YvnfoZ00PRjVEsJDP00MNJx5TiTj3ALo4tRjSMcnI1iwlEcuOWPJfv1byrh9x2uj0l4oT-WH7JHekuJi6a3Hn8GNOGCyvRRzZoBrofLZOiADR2M0NVNCPwpBW-3_4a2dwSfTl73BXPlKwCsTPG1etKGgJhBgn20y809oMxWEszsmk5GANA638T7mCmuUAKSLoNrX9o0D4py-CvkX0kb6J0prMcZXKN3EckLrRxi5qJeV");'></div>
+</div>
+</header>
+<main class="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+<div class="flex flex-wrap items-center gap-2 mb-4">
+<a class="text-sm font-medium text-subtext-light dark:text-subtext-dark hover:text-primary" href="#">Dashboard</a>
+<span class="text-subtext-light dark:text-subtext-dark">/</span>
+<span class="text-sm font-medium text-secondary dark:text-text-dark">Incidents Management</span>
+</div>
+<div class="flex flex-wrap justify-between gap-3 mb-8">
+<h1 class="text-3xl font-black tracking-tighter min-w-72">Incidents</h1>
+<button class="flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white hover:bg-primary/90 transition-colors shadow-sm">
+<span class="material-symbols-outlined text-xl">add</span>
+    Report New Incident
+</button>
+</div>
+<div class="bg-card-light dark:bg-card-dark rounded-xl shadow-sm border border-border-light dark:border-border-dark overflow-hidden">
+<div class="p-4 border-b border-border-light dark:border-border-dark bg-background-light/50 dark:bg-background-dark/50 flex flex-wrap gap-4 items-end">
+<div class="flex-1 min-w-[200px]">
+<label class="block text-xs font-semibold text-subtext-light dark:text-subtext-dark mb-1">Search</label>
+<div class="relative">
+<span class="absolute inset-y-0 left-0 flex items-center pl-3 text-subtext-light dark:text-subtext-dark">
+<span class="material-symbols-outlined text-xl">search</span>
+</span>
+<input class="w-full pl-10 pr-4 py-2 rounded-lg border-border-light dark:border-border-dark bg-card-light dark:bg-card-dark text-sm focus:border-primary focus:ring-primary" placeholder="Search by ID or equipment..." type="text"/>
+</div>
+</div>
+<div class="w-full sm:w-auto">
+<label class="block text-xs font-semibold text-subtext-light dark:text-subtext-dark mb-1">Status</label>
+<select class="w-full sm:w-48 py-2 px-3 rounded-lg border-border-light dark:border-border-dark bg-card-light dark:bg-card-dark text-sm focus:border-primary focus:ring-primary">
+<option value="">All Statuses</option>
+<option value="open">Open</option>
+<option value="in_progress">In Progress</option>
+<option value="resolved">Resolved</option>
+<option value="closed">Closed</option>
+</select>
+</div>
+<div class="w-full sm:w-auto">
+<label class="block text-xs font-semibold text-subtext-light dark:text-subtext-dark mb-1">Priority</label>
+<select class="w-full sm:w-48 py-2 px-3 rounded-lg border-border-light dark:border-border-dark bg-card-light dark:bg-card-dark text-sm focus:border-primary focus:ring-primary">
+<option value="">All Priorities</option>
+<option value="critical">Critical</option>
+<option value="high">High</option>
+<option value="medium">Medium</option>
+<option value="low">Low</option>
+</select>
+</div>
+<button class="h-[38px] px-4 rounded-lg bg-white dark:bg-card-dark border border-border-light dark:border-border-dark text-subtext-light dark:text-subtext-dark hover:text-primary dark:hover:text-primary hover:border-primary transition-colors flex items-center gap-2 text-sm font-medium">
+<span class="material-symbols-outlined text-lg">filter_list</span>
+            More Filters
+        </button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left text-sm">
+<thead class="bg-background-light dark:bg-background-dark/50 border-b border-border-light dark:border-border-dark text-subtext-light dark:text-subtext-dark uppercase tracking-wider text-xs font-semibold">
+<tr>
+<th class="px-6 py-4" scope="col">ID</th>
+<th class="px-6 py-4" scope="col">Equipment Name</th>
+<th class="px-6 py-4" scope="col">Issue Description</th>
+<th class="px-6 py-4" scope="col">Status</th>
+<th class="px-6 py-4" scope="col">Priority</th>
+<th class="px-6 py-4" scope="col">Reported At</th>
+<th class="px-6 py-4 text-right" scope="col">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-border-light dark:divide-border-dark">
+<tr class="hover:bg-background-light/50 dark:hover:bg-card-dark/50 transition-colors">
+<td class="px-6 py-4 font-mono text-xs text-subtext-light dark:text-subtext-dark">#INC-2024-001</td>
+<td class="px-6 py-4 font-medium text-secondary dark:text-text-dark">SpectraMax M5</td>
+<td class="px-6 py-4 text-subtext-light dark:text-subtext-dark max-w-xs truncate">Optical sensor calibration failed during routine check.</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400">
+<span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                            Open
+                        </span>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1 text-red-600 dark:text-red-400 font-medium">
+<span class="material-symbols-outlined text-lg">priority_high</span>
+                            Critical
+                        </span>
+</td>
+<td class="px-6 py-4 text-subtext-light dark:text-subtext-dark">Oct 24, 2023 09:42 AM</td>
+<td class="px-6 py-4 text-right">
+<button class="text-subtext-light dark:text-subtext-dark hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-background-light/50 dark:hover:bg-card-dark/50 transition-colors">
+<td class="px-6 py-4 font-mono text-xs text-subtext-light dark:text-subtext-dark">#INC-2024-002</td>
+<td class="px-6 py-4 font-medium text-secondary dark:text-text-dark">Centrifuge 5424 R</td>
+<td class="px-6 py-4 text-subtext-light dark:text-subtext-dark max-w-xs truncate">Unusual noise detected at high RPM speeds.</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400">
+<span class="w-1.5 h-1.5 rounded-full bg-yellow-500"></span>
+                            In Progress
+                        </span>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1 text-orange-600 dark:text-orange-400 font-medium">
+<span class="material-symbols-outlined text-lg">arrow_upward</span>
+                            High
+                        </span>
+</td>
+<td class="px-6 py-4 text-subtext-light dark:text-subtext-dark">Oct 23, 2023 02:15 PM</td>
+<td class="px-6 py-4 text-right">
+<button class="text-subtext-light dark:text-subtext-dark hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-background-light/50 dark:hover:bg-card-dark/50 transition-colors">
+<td class="px-6 py-4 font-mono text-xs text-subtext-light dark:text-subtext-dark">#INC-2024-003</td>
+<td class="px-6 py-4 font-medium text-secondary dark:text-text-dark">Incubator Shaker</td>
+<td class="px-6 py-4 text-subtext-light dark:text-subtext-dark max-w-xs truncate">Temperature fluctuation warning.</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-500/10 dark:text-green-400">
+<span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                            Resolved
+                        </span>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 font-medium">
+<span class="material-symbols-outlined text-lg">remove</span>
+                            Medium
+                        </span>
+</td>
+<td class="px-6 py-4 text-subtext-light dark:text-subtext-dark">Oct 22, 2023 11:30 AM</td>
+<td class="px-6 py-4 text-right">
+<button class="text-subtext-light dark:text-subtext-dark hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-background-light/50 dark:hover:bg-card-dark/50 transition-colors">
+<td class="px-6 py-4 font-mono text-xs text-subtext-light dark:text-subtext-dark">#INC-2024-004</td>
+<td class="px-6 py-4 font-medium text-secondary dark:text-text-dark">HPLC System</td>
+<td class="px-6 py-4 text-subtext-light dark:text-subtext-dark max-w-xs truncate">Software update required for new column type.</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300">
+<span class="w-1.5 h-1.5 rounded-full bg-gray-500"></span>
+                            Closed
+                        </span>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1 text-subtext-light dark:text-subtext-dark font-medium">
+<span class="material-symbols-outlined text-lg">arrow_downward</span>
+                            Low
+                        </span>
+</td>
+<td class="px-6 py-4 text-subtext-light dark:text-subtext-dark">Oct 20, 2023 04:45 PM</td>
+<td class="px-6 py-4 text-right">
+<button class="text-subtext-light dark:text-subtext-dark hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-background-light/50 dark:hover:bg-card-dark/50 transition-colors">
+<td class="px-6 py-4 font-mono text-xs text-subtext-light dark:text-subtext-dark">#INC-2024-005</td>
+<td class="px-6 py-4 font-medium text-secondary dark:text-text-dark">Microscope Leica DM</td>
+<td class="px-6 py-4 text-subtext-light dark:text-subtext-dark max-w-xs truncate">Lens focus mechanism stuck.</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400">
+<span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                            Open
+                        </span>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1 text-orange-600 dark:text-orange-400 font-medium">
+<span class="material-symbols-outlined text-lg">arrow_upward</span>
+                            High
+                        </span>
+</td>
+<td class="px-6 py-4 text-subtext-light dark:text-subtext-dark">Oct 19, 2023 08:00 AM</td>
+<td class="px-6 py-4 text-right">
+<button class="text-subtext-light dark:text-subtext-dark hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="px-6 py-4 border-t border-border-light dark:border-border-dark flex items-center justify-between">
+<div class="text-sm text-subtext-light dark:text-subtext-dark">
+            Showing <span class="font-medium text-secondary dark:text-text-dark">1</span> to <span class="font-medium text-secondary dark:text-text-dark">5</span> of <span class="font-medium text-secondary dark:text-text-dark">12</span> results
+        </div>
+<div class="flex items-center gap-2">
+<button class="p-2 rounded-lg border border-border-light dark:border-border-dark text-subtext-light dark:text-subtext-dark hover:bg-background-light dark:hover:bg-background-dark disabled:opacity-50 disabled:cursor-not-allowed" disabled="">
+<span class="material-symbols-outlined text-lg">chevron_left</span>
+</button>
+<button class="p-2 rounded-lg border border-border-light dark:border-border-dark text-subtext-light dark:text-subtext-dark hover:bg-background-light dark:hover:bg-background-dark hover:text-primary">
+<span class="material-symbols-outlined text-lg">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

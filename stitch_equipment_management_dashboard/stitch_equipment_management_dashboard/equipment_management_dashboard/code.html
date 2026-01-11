@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Equiptalk.ai - My Equipment</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings:
+            'FILL' 0,
+            'wght' 400,
+            'GRAD' 0,
+            'opsz' 24
+        }
+    </style>
+</head>
+<body class="font-display bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-200">
+<div class="relative flex h-auto min-h-screen w-full flex-col group/design-root overflow-x-hidden">
+<header class="sticky top-0 z-10 bg-white dark:bg-background-dark border-b border-slate-200 dark:border-slate-800">
+<div class="container mx-auto px-4 sm:px-6 lg:px-8">
+<div class="flex h-16 items-center justify-between whitespace-nowrap">
+<div class="flex items-center gap-4 text-slate-900 dark:text-white">
+<div class="flex items-center justify-center size-8 rounded bg-primary text-white font-bold text-sm tracking-tight">
+                        Eq
+                    </div>
+<h2 class="text-lg font-bold leading-tight tracking-[-0.015em]">Equiptalk.ai</h2>
+</div>
+<div class="flex flex-1 justify-end items-center gap-4">
+<nav class="hidden md:flex items-center gap-1">
+<a class="text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-primary dark:hover:text-primary hover:bg-slate-100 dark:hover:bg-slate-800 px-3 py-2 rounded-lg transition-colors" href="#">Dashboard</a>
+<a class="text-sm font-bold text-primary bg-primary/10 dark:bg-primary/20 px-3 py-2 rounded-lg transition-colors" href="#">Equipment</a>
+<a class="text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-primary dark:hover:text-primary hover:bg-slate-100 dark:hover:bg-slate-800 px-3 py-2 rounded-lg transition-colors" href="#">Agents</a>
+<a class="text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-primary dark:hover:text-primary hover:bg-slate-100 dark:hover:bg-slate-800 px-3 py-2 rounded-lg transition-colors" href="#">Incidents</a>
+</nav>
+<div class="hidden md:flex items-center gap-2">
+<button class="flex items-center justify-center size-10 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 ring-1 ring-slate-200 dark:ring-slate-700 cursor-pointer" data-alt="User avatar image" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuB0D86845NOfZfF4iIobun2fB5GAIyvSCkqTGglMXmTpZtdbJOLVmRK5su7uiBlYEJUTK3KpUg1D3FDOKIdWGk8ei1VzfCVH9E8LVOceP4DcXPq3hn6eciLrR6sl2zJo6FKmkr0D0OSK3_Hj4eeq1KNdOwNAheqy6iUHjnxZBgNldCxLkf_L5LF3MFxgsMqp7gV1i7rNfJsTfQ-MdNSnBqzPxkVn0wKK-qch18F-FEM4Q1ssJvoWMvYOd1-j9R550hhBRXIv_sR5RlN");'></div>
+</div>
+</div>
+</div>
+</div>
+</header>
+<main class="flex-1">
+<div class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+<div class="flex flex-col sm:flex-row flex-wrap items-start sm:items-center justify-between gap-4 mb-6">
+<h1 class="text-slate-900 dark:text-white text-4xl font-black leading-tight tracking-[-0.033em]">My Equipment</h1>
+<div class="flex items-center gap-4">
+<div class="bg-slate-100 dark:bg-slate-800 p-1 rounded-lg flex items-center border border-slate-200 dark:border-slate-700">
+<button class="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors" onclick="document.getElementById('hierarchy-view').classList.add('hidden'); document.getElementById('grid-view').classList.remove('hidden'); this.classList.remove('bg-white','shadow-sm','text-primary'); this.nextElementSibling.classList.add('bg-white','shadow-sm','text-primary');">
+<span class="material-symbols-outlined text-[20px]">grid_view</span>
+<span class="hidden sm:inline">Grid</span>
+</button>
+<button class="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium bg-white dark:bg-slate-700 shadow-sm text-primary dark:text-white transition-colors" onclick="document.getElementById('grid-view').classList.add('hidden'); document.getElementById('hierarchy-view').classList.remove('hidden'); this.previousElementSibling.classList.remove('bg-white','shadow-sm','text-primary'); this.classList.add('bg-white','shadow-sm','text-primary');">
+<span class="material-symbols-outlined text-[20px]">account_tree</span>
+<span class="hidden sm:inline">Hierarchy</span>
+</button>
+</div>
+<button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-primary hover:bg-primary/90 text-white text-sm font-bold leading-normal tracking-[0.015em] transition-colors gap-2">
+<span class="material-symbols-outlined text-base">add</span>
+<span class="truncate">Add New Equipment</span>
+</button>
+</div>
+</div>
+<div class="flex flex-col md:flex-row gap-4 mb-6">
+<div class="flex-1">
+<label class="flex flex-col min-w-40 h-12 w-full">
+<div class="flex w-full flex-1 items-stretch rounded-lg h-full">
+<div class="text-slate-500 dark:text-slate-400 flex border-none bg-white dark:bg-slate-800/50 items-center justify-center pl-4 rounded-l-lg border-r-0">
+<span class="material-symbols-outlined">search</span>
+</div>
+<input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-slate-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border-none bg-white dark:bg-slate-800/50 h-full placeholder:text-slate-500 dark:placeholder:text-slate-400 px-4 rounded-l-none border-l-0 pl-2 text-base font-normal leading-normal" placeholder="Search by name or ID..." value=""/>
+</div>
+</label>
+</div>
+<div class="flex items-center gap-2 overflow-x-auto pb-2">
+<button class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-primary/20 dark:bg-primary/30 px-4">
+<p class="text-primary dark:text-white text-sm font-medium leading-normal">All</p>
+</button>
+<button class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-white dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 px-4">
+<p class="text-slate-700 dark:text-slate-300 text-sm font-medium leading-normal">Active</p>
+</button>
+<button class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-white dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 px-4">
+<p class="text-slate-700 dark:text-slate-300 text-sm font-medium leading-normal">In Repair</p>
+</button>
+<button class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-white dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 px-4">
+<p class="text-slate-700 dark:text-slate-300 text-sm font-medium leading-normal">Decommissioned</p>
+</button>
+</div>
+</div>
+<div class="relative w-full">
+<div class="w-full" id="hierarchy-view">
+<div class="flex items-center justify-between mb-6 text-sm">
+<div class="flex items-center gap-4">
+<button class="flex items-center gap-1 text-primary hover:text-primary/80 font-medium">
+<span class="material-symbols-outlined text-[18px]">unfold_less</span>
+                    Collapse All
+                </button>
+<button class="flex items-center gap-1 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">
+<span class="material-symbols-outlined text-[18px]">unfold_more</span>
+                    Expand All
+                </button>
+</div>
+<button class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500">
+<span class="material-symbols-outlined">refresh</span>
+</button>
+</div>
+<div class="overflow-x-auto pb-8">
+<div class="min-w-[800px] flex flex-col gap-4">
+<div class="flex flex-col relative group/node">
+<div class="flex items-center gap-3">
+<button class="size-8 flex items-center justify-center rounded-full border border-slate-300 bg-white hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:hover:bg-slate-700 transition-colors z-10">
+<span class="material-symbols-outlined text-slate-500">remove</span>
+</button>
+<div class="flex items-center gap-4 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg p-3 min-w-[320px] shadow-sm">
+<span class="material-symbols-outlined text-slate-400">factory</span>
+<div class="flex-1">
+<h3 class="text-sm font-bold text-slate-900 dark:text-white">TBMNC</h3>
+<p class="text-xs text-slate-500">Factory</p>
+</div>
+<span class="px-2 py-0.5 rounded text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">Clear</span>
+</div>
+<button class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors text-xs font-bold">
+<span class="material-symbols-outlined text-[18px]">add</span>
+    Add Child
+</button>
+</div>
+<div class="pl-[15px] pt-3 pb-0 relative ml-0 border-l border-slate-300 dark:border-slate-700 border-dashed">
+<div class="flex flex-col relative pl-8 pb-6 group/subnode">
+<div class="absolute top-[20px] left-0 w-8 h-px bg-slate-300 dark:bg-slate-700 border-t border-dashed"></div>
+<div class="flex items-center gap-3">
+<button class="size-8 flex items-center justify-center rounded-full border border-slate-300 bg-white hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:hover:bg-slate-700 transition-colors z-10">
+<span class="material-symbols-outlined text-slate-500">remove</span>
+</button>
+<div class="flex items-center gap-4 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg p-3 min-w-[320px] shadow-sm">
+<span class="material-symbols-outlined text-slate-400">warehouse</span>
+<div class="flex-1">
+<h3 class="text-sm font-bold text-slate-900 dark:text-white">HEV Shopfloor</h3>
+<p class="text-xs text-slate-500">Shopfloor</p>
+</div>
+<span class="px-2 py-0.5 rounded text-xs font-semibold bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">Critical</span>
+</div>
+<button class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors text-xs font-bold">
+<span class="material-symbols-outlined text-[18px]">add</span>
+    Add Child
+</button>
+</div>
+<div class="pl-[15px] pt-3 relative ml-0 border-l border-slate-300 dark:border-slate-700 border-dashed">
+<div class="relative pl-8 pb-4 flex items-center gap-3">
+<div class="absolute top-[28px] left-0 w-8 h-px bg-slate-300 dark:bg-slate-700 border-t border-dashed"></div>
+<div class="flex items-center gap-4 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg p-3 min-w-[320px] shadow-sm ml-[32px]">
+<span class="material-symbols-outlined text-slate-400">grid_4x4</span>
+<div class="flex-1">
+<h3 class="text-sm font-bold text-slate-900 dark:text-white">Mixing</h3>
+<p class="text-xs text-slate-500">Cell</p>
+</div>
+<span class="px-2 py-0.5 rounded text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">Clear</span>
+</div>
+<button class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors text-xs font-bold">
+<span class="material-symbols-outlined text-[18px]">add</span>
+    Add Child
+</button>
+</div>
+<div class="relative pl-8 pb-4 flex items-center gap-3">
+<div class="absolute top-[28px] left-0 w-8 h-px bg-slate-300 dark:bg-slate-700 border-t border-dashed"></div>
+<div class="flex items-center gap-4 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg p-3 min-w-[320px] shadow-sm ml-[32px]">
+<span class="material-symbols-outlined text-slate-400">grid_4x4</span>
+<div class="flex-1">
+<h3 class="text-sm font-bold text-slate-900 dark:text-white">Cathode</h3>
+<p class="text-xs text-slate-500">Cell</p>
+</div>
+<span class="px-2 py-0.5 rounded text-xs font-semibold bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">Critical</span>
+</div>
+<button class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors text-xs font-bold">
+<span class="material-symbols-outlined text-[18px]">add</span>
+    Add Child
+</button>
+</div>
+<div class="relative pl-8 pb-4 flex items-center gap-3">
+<div class="absolute top-[28px] left-0 w-8 h-px bg-slate-300 dark:bg-slate-700 border-t border-dashed"></div>
+<div class="flex items-center gap-4 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg p-3 min-w-[320px] shadow-sm ml-[32px]">
+<span class="material-symbols-outlined text-slate-400">grid_4x4</span>
+<div class="flex-1">
+<h3 class="text-sm font-bold text-slate-900 dark:text-white">Anode</h3>
+<p class="text-xs text-slate-500">Cell</p>
+</div>
+<span class="px-2 py-0.5 rounded text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">Clear</span>
+</div>
+<button class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors text-xs font-bold">
+<span class="material-symbols-outlined text-[18px]">add</span>
+    Add Child
+</button>
+</div>
+</div>
+</div>
+<div class="flex flex-col relative pl-8 pt-0 group/subnode">
+<div class="absolute top-[20px] left-0 w-8 h-px bg-slate-300 dark:bg-slate-700 border-t border-dashed"></div>
+<div class="flex items-center gap-3">
+<button class="size-8 flex items-center justify-center rounded-full border border-slate-300 bg-white hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:hover:bg-slate-700 transition-colors z-10">
+<span class="material-symbols-outlined text-slate-500">add</span>
+</button>
+<div class="flex items-center gap-4 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg p-3 min-w-[320px] shadow-sm">
+<span class="material-symbols-outlined text-slate-400">warehouse</span>
+<div class="flex-1">
+<h3 class="text-sm font-bold text-slate-900 dark:text-white">BEV Shopfloor</h3>
+<p class="text-xs text-slate-500">Shopfloor</p>
+</div>
+<span class="px-2 py-0.5 rounded text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">Clear</span>
+</div>
+<button class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors text-xs font-bold">
+<span class="material-symbols-outlined text-[18px]">add</span>
+    Add Child
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 hidden" id="grid-view">
+<div class="group relative flex flex-col gap-3 rounded-xl bg-white dark:bg-slate-800/50 p-4 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all">
+<div class="w-full bg-center bg-no-repeat aspect-video bg-cover rounded-lg" data-alt="An industrial laser cutter machine in a workshop" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBECioeuV49HFnFyNtVIAhE5kuMQIhz11VcbdonfD4ur6j5xxkJLXJ2hpbu6x8kvhssW3tYbLMv1kkM_092WVWQq7Z6O07cGnpxJizvpetXw40eoy7YXlCgqEkKsBu8eWSAZ-ZrEs-Cj9eURLut8U0XkNLF0lyUHe1H3Hdfsc1ve0n--03gDO5hJhLn63gGHh3pOWfcEnylgTyJ9_mAKUt4jvyl8ofrm9tllRFwswmjAmLLcSLbVfDeoHQ5qkjm3k95X2A3Hig-G6gV");'></div>
+<div class="flex-1">
+<p class="text-slate-900 dark:text-white text-base font-bold leading-normal mb-1">Industrial Laser Cutter</p>
+<p class="text-slate-500 dark:text-slate-400 text-sm font-normal leading-normal">Type: Manufacturing</p>
+<div class="flex items-center gap-2 mt-1">
+<div class="size-2 rounded-full bg-green-500"></div>
+<p class="text-slate-500 dark:text-slate-400 text-sm font-normal leading-normal">Status: Active</p>
+</div>
+</div>
+<div class="absolute top-3 right-3 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="flex items-center justify-center size-8 rounded-full bg-slate-100/80 dark:bg-slate-900/80 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+<span class="material-symbols-outlined text-lg text-slate-700 dark:text-slate-300">edit</span>
+</button>
+<button class="flex items-center justify-center size-8 rounded-full bg-slate-100/80 dark:bg-slate-900/80 hover:bg-red-500 dark:hover:bg-red-500 group/delete transition-colors">
+<span class="material-symbols-outlined text-lg text-slate-700 dark:text-slate-300 group-hover/delete:text-white">delete</span>
+</button>
+</div>
+</div>
+<div class="group relative flex flex-col gap-3 rounded-xl bg-white dark:bg-slate-800/50 p-4 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all">
+<div class="w-full bg-center bg-no-repeat aspect-video bg-cover rounded-lg" data-alt="A large CNC milling machine working on a metal part" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDR7OwsQLYR33IT9q7eT01Y39AMSMvW6lOIWsea-xB_wn4ZXKJwcuEEyA9dUI9B7ERP5rMoPdsdBnkH8P_hTWSBWIbV149h4vcpJTiRMIppmSMvvakw5pIfWoUc7i-4PtCvcZldwkLMZLqESbkr-XENVu-o-HENf8ERACDsI7tfm8GA--PX7MxS2j6sLUAJ5saE-ORvKfzEbKBfdiZaSmaskZbMpYHW6kj--L0E1VYzJSnK89H_knWKdyi4Kfy4MNoybjVS0h_G3NhR");'></div>
+<div class="flex-1">
+<p class="text-slate-900 dark:text-white text-base font-bold leading-normal mb-1">CNC Milling Machine</p>
+<p class="text-slate-500 dark:text-slate-400 text-sm font-normal leading-normal">Type: Prototyping</p>
+<div class="flex items-center gap-2 mt-1">
+<div class="size-2 rounded-full bg-green-500"></div>
+<p class="text-slate-500 dark:text-slate-400 text-sm font-normal leading-normal">Status: Active</p>
+</div>
+</div>
+<div class="absolute top-3 right-3 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="flex items-center justify-center size-8 rounded-full bg-slate-100/80 dark:bg-slate-900/80 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+<span class="material-symbols-outlined text-lg text-slate-700 dark:text-slate-300">edit</span>
+</button>
+<button class="flex items-center justify-center size-8 rounded-full bg-slate-100/80 dark:bg-slate-900/80 hover:bg-red-500 dark:hover:bg-red-500 group/delete transition-colors">
+<span class="material-symbols-outlined text-lg text-slate-700 dark:text-slate-300 group-hover/delete:text-white">delete</span>
+</button>
+</div>
+</div>
+<div class="group relative flex flex-col gap-3 rounded-xl bg-white dark:bg-slate-800/50 p-4 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all">
+<div class="w-full bg-center bg-no-repeat aspect-video bg-cover rounded-lg" data-alt="A robotic arm on an assembly line" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAZUXN6D6zpu6PWAxgLMj4gPU27UuaPbuHMCPRrRolIww_B_HRY8rZjRrY8c6DH_Bp8YB5czZ9yurSD18cJB2OjvDRgj-NTBCQUz5BjUdvGCGLtYgs9DNc2QxE-YZFJgHkiWa8wWP6mWB_5cFkr1-fHgag5CMymy3KJV7V46cC02QAEeePDU1yZ8TIAYNzij9MY1jkuJQkp8IfjDDLAVVQXNnpjokRX64QQkbqozopI92VngoE0wcyV3m37mA9rgrJTuQomlTVG2qpP");'></div>
+<div class="flex-1">
+<p class="text-slate-900 dark:text-white text-base font-bold leading-normal mb-1">Robotic Arm Assembly</p>
+<p class="text-slate-500 dark:text-slate-400 text-sm font-normal leading-normal">Type: Automation</p>
+<div class="flex items-center gap-2 mt-1">
+<div class="size-2 rounded-full bg-orange-500"></div>
+<p class="text-slate-500 dark:text-slate-400 text-sm font-normal leading-normal">Status: In Repair</p>
+</div>
+</div>
+<div class="absolute top-3 right-3 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="flex items-center justify-center size-8 rounded-full bg-slate-100/80 dark:bg-slate-900/80 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+<span class="material-symbols-outlined text-lg text-slate-700 dark:text-slate-300">edit</span>
+</button>
+<button class="flex items-center justify-center size-8 rounded-full bg-slate-100/80 dark:bg-slate-900/80 hover:bg-red-500 dark:hover:bg-red-500 group/delete transition-colors">
+<span class="material-symbols-outlined text-lg text-slate-700 dark:text-slate-300 group-hover/delete:text-white">delete</span>
+</button>
+</div>
+</div>
+<div class="group relative flex flex-col gap-3 rounded-xl bg-white dark:bg-slate-800/50 p-4 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all">
+<div class="w-full bg-center bg-no-repeat aspect-video bg-cover rounded-lg" data-alt="A 3D printer in the process of creating a model" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDST4i8GV7DRMBAQHMTLOCVyscm8muTqQuEpOu6D8wHvcUnEtBt3damu44XvH4PWJcaIK7YLPcxi_lCpgyVrkaDYUYTMOjhpPdg43wSjzyGTw8RuHLY3hwluG0MYJ75otEVegaSqILK0nBvQfde2GJblzgg65y6o-JSJ7K8ds7fEj_n-T284DLwpLv73wXP_we6SgwQsp_vN0JoswZG1dhhXdDbx3b5HRGJE4GWF0dfHsJhnmT9CTXL_rjwqDAisqXvTrVHFzO-aPP0");'></div>
+<div class="flex-1">
+<p class="text-slate-900 dark:text-white text-base font-bold leading-normal mb-1">3D Printer Pro</p>
+<p class="text-slate-500 dark:text-slate-400 text-sm font-normal leading-normal">Type: Prototyping</p>
+<div class="flex items-center gap-2 mt-1">
+<div class="size-2 rounded-full bg-red-500"></div>
+<p class="text-slate-500 dark:text-slate-400 text-sm font-normal leading-normal">Status: Decommissioned</p>
+</div>
+</div>
+<div class="absolute top-3 right-3 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="flex items-center justify-center size-8 rounded-full bg-slate-100/80 dark:bg-slate-900/80 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+<span class="material-symbols-outlined text-lg text-slate-700 dark:text-slate-300">edit</span>
+</button>
+<button class="flex items-center justify-center size-8 rounded-full bg-slate-100/80 dark:bg-slate-900/80 hover:bg-red-500 dark:hover:bg-red-500 group/delete transition-colors">
+<span class="material-symbols-outlined text-lg text-slate-700 dark:text-slate-300 group-hover/delete:text-white">delete</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></main>
+</div>
+</body></html>

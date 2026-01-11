@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Equipment Manager - SpectraMax M5</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+        darkMode: "class",
+        theme: {
+            extend: {
+                colors: {
+                    "primary": "#4A90E2",
+                    "secondary": "#333333",
+                    "accent": "#50E3C2",
+                    "background-light": "#F4F7FA",
+                    "background-dark": "#101922",
+                    "card-light": "#FFFFFF",
+                    "card-dark": "#1A242E",
+                    "text-light": "#333333",
+                    "text-dark": "#E0E0E0",
+                    "subtext-light": "#6b7280",
+                    "subtext-dark": "#9ca3af",
+                    "border-light": "#E0E0E0",
+                    "border-dark": "#374151"
+                },
+                fontFamily: {
+                    "display": ["Inter", "sans-serif"]
+                },
+                borderRadius: {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+                },
+            },
+        },
+    }
+    </script>
+<style>
+    .material-symbols-outlined {
+        font-variation-settings:
+            'FILL' 0,
+            'wght' 400,
+            'GRAD' 0,
+            'opsz' 24
+    }
+    </style>
+</head>
+<body class="font-display bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark">
+<div class="relative flex h-auto min-h-screen w-full flex-col">
+<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-border-light dark:border-border-dark px-4 sm:px-6 lg:px-8 py-3 bg-card-light dark:bg-card-dark sticky top-0 z-50 shadow-sm">
+<div class="flex items-center gap-4 text-secondary dark:text-text-dark">
+<div class="text-primary size-6">
+<span class="material-symbols-outlined text-3xl">widgets</span>
+</div>
+<h2 class="text-lg font-bold tracking-tight">EquipmentManager</h2>
+</div>
+<nav class="hidden md:flex items-center gap-8">
+<a class="text-sm font-medium hover:text-primary dark:hover:text-primary" href="#">Dashboard</a>
+<a class="text-sm font-medium text-primary dark:text-primary border-b-2 border-primary pb-1" href="#">Equipment</a>
+<a class="text-sm font-medium hover:text-primary dark:hover:text-primary" href="#">Agents</a>
+<a class="text-sm font-medium hover:text-primary dark:hover:text-primary" href="#">Settings</a>
+</nav>
+<div class="flex items-center gap-4">
+<button class="flex cursor-pointer items-center justify-center rounded-full h-10 w-10 bg-background-light dark:bg-background-dark text-secondary dark:text-text-dark hover:bg-primary/10 dark:hover:bg-primary/20">
+<span class="material-symbols-outlined text-xl">notifications</span>
+</button>
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" data-alt="User profile picture" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAPkXCrx8Q0Ix0q5Ky75ALycsNmaxYb2F58YvnfoZ00PRjVEsJDP00MNJx5TiTj3ALo4tRjSMcnI1iwlEcuOWPJfv1byrh9x2uj0l4oT-WH7JHekuJi6a3Hn8GNOGCyvRRzZoBrofLZOiADR2M0NVNCPwpBW-3_4a2dwSfTl73BXPlKwCsTPG1etKGgJhBgn20y809oMxWEszsmk5GANA638T7mCmuUAKSLoNrX9o0D4py-CvkX0kb6J0prMcZXKN3EckLrRxi5qJeV");'></div>
+</div>
+</header>
+<main class="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+<div class="flex flex-wrap items-center gap-2 mb-4">
+<a class="text-sm font-medium text-subtext-light dark:text-subtext-dark hover:text-primary" href="#">Dashboard</a>
+<span class="text-subtext-light dark:text-subtext-dark">/</span>
+<a class="text-sm font-medium text-subtext-light dark:text-subtext-dark hover:text-primary" href="#">Equipment List</a>
+<span class="text-subtext-light dark:text-subtext-dark">/</span>
+<span class="text-sm font-medium text-secondary dark:text-text-dark">SpectraMax M5 Spectrophotometer</span>
+</div>
+<div class="flex flex-wrap justify-between gap-3 mb-8">
+<h1 class="text-3xl font-black tracking-tighter min-w-72">SpectraMax M5 Spectrophotometer</h1>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+<aside class="lg:col-span-4 xl:col-span-3 space-y-6">
+<div class="bg-card-light dark:bg-card-dark rounded-xl p-6 shadow-sm border border-border-light dark:border-border-dark flex flex-col items-center text-center">
+<div class="relative group mb-4">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-lg w-32 h-32" data-alt="SpectraMax M5 Spectrophotometer logo" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCgLXcDY4ZjP55LKJrTcEKJPDuFFlPkdfJnAlECaXAqSp6e4Du1wwCCsN9pvGKBcWpYMHWacve7vs_MQwIalif_aBG-mA5WTd9rAFHdgqQnVb-_NUciO_WLPQXw7ygzJ7wZP4KLdxHUIfIaWOddGTe5fr5BnInZ6fRkcLZe7gOeBe8bCNiEpPJx0EOK123OVfPFqVFHzFn0KXrNpRGnMI2i1Z7Uuv-OTQE1MTclupPRcd_Hf3udqqNAun6yePhQXCwhDO8neJixbUYd");'></div>
+<button class="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined mr-2">upload_file</span> Change
+ </button>
+</div>
+<h2 class="text-lg font-bold">SpectraMax M5</h2>
+<div class="mt-2 inline-flex items-center gap-2 rounded-full bg-accent/20 dark:bg-accent/30 px-3 py-1 text-sm font-medium text-accent-dark dark:text-accent">
+<span class="h-2 w-2 rounded-full bg-accent"></span>
+ Agent Status: Active
+ </div>
+</div>
+<div class="bg-card-light dark:bg-card-dark rounded-xl p-4 shadow-sm border border-border-light dark:border-border-dark">
+<div class="flex flex-col gap-3">
+<button class="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-primary/20 dark:bg-primary/30 text-primary text-sm font-bold tracking-wide hover:bg-primary/30 dark:hover:bg-primary/40">
+ Save Changes
+ </button>
+<button class="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-red-500/10 dark:bg-red-500/20 text-red-600 dark:text-red-400 text-sm font-bold tracking-wide hover:bg-red-500/20 dark:hover:bg-red-500/30">
+ Delete Equipment
+ </button>
+</div>
+</div>
+</aside>
+<div class="lg:col-span-8 xl:col-span-9">
+<div class="bg-card-light dark:bg-card-dark rounded-xl shadow-sm border border-border-light dark:border-border-dark">
+<div class="border-b border-border-light dark:border-border-dark px-6">
+<nav class="flex gap-8 -mb-px">
+<a class="flex items-center justify-center gap-2 border-b-2 border-transparent text-subtext-light dark:text-subtext-dark hover:text-primary dark:hover:text-primary hover:border-primary/50 py-4 px-1" href="#">
+<span class="material-symbols-outlined text-xl">school</span>
+<p class="text-sm font-bold">Knowledge &amp; Training</p>
+</a>
+<a class="flex items-center justify-center gap-2 border-b-2 border-transparent text-subtext-light dark:text-subtext-dark hover:text-primary dark:hover:text-primary hover:border-primary/50 py-4 px-1" href="#">
+<span class="material-symbols-outlined text-xl">smart_toy</span>
+<p class="text-sm font-bold">Agent Configuration</p>
+</a>
+<a class="flex items-center justify-center gap-2 border-b-2 border-primary text-primary py-4 px-1" href="#">
+<span class="material-symbols-outlined text-xl">share</span>
+<p class="text-sm font-bold">Public Access</p>
+</a>
+</nav>
+</div>
+<div class="p-6">
+<div class="space-y-8">
+<div>
+<h3 class="text-xl font-bold">Share Public Link</h3>
+<p class="text-subtext-light dark:text-subtext-dark mt-1">Generate a unique link and QR code to provide public access to the equipment's AI agent.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
+<div class="md:col-span-2 space-y-4">
+<div>
+<label class="font-semibold text-sm" for="public-link">Unique Public Link</label>
+<div class="mt-2 flex items-center gap-2">
+<input class="w-full flex-grow rounded-lg border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark focus:border-primary focus:ring-primary" id="public-link" readonly="" type="text" value="https://app.equipmanager.com/public/eq-4a7b9c1d2e"/>
+<button class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary hover:bg-primary/20 dark:bg-primary/20 dark:hover:bg-primary/30" title="Copy link">
+<span class="material-symbols-outlined text-xl">content_copy</span>
+</button>
+</div>
+</div>
+<div class="flex flex-wrap gap-2 pt-2">
+<button class="flex cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-lg h-10 px-4 bg-primary/20 dark:bg-primary/30 text-primary text-sm font-bold tracking-wide hover:bg-primary/30 dark:hover:bg-primary/40">
+<span class="material-symbols-outlined text-xl">refresh</span>
+<span>Regenerate Link</span>
+</button>
+<button class="flex cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-lg h-10 px-4 bg-secondary/10 dark:bg-white/10 text-secondary dark:text-text-dark text-sm font-bold tracking-wide hover:bg-secondary/20 dark:hover:bg-white/20">
+<span class="material-symbols-outlined text-xl">download</span>
+<span>Download QR Code</span>
+</button>
+</div>
+</div>
+<div class="flex flex-col items-center justify-center text-center">
+<div class="bg-white p-3 rounded-lg border border-border-light dark:border-border-dark shadow-sm">
+<img alt="QR code for public access link" class="h-32 w-32" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC5CrheVVBObA7Z7Ys0U1Z8qR9rV9-46xgbehp2J4tTp8rY7VUZKuTbIBpj3TaFPF9WDddfvP5Zowzp5B-CH_WS_IS18z0DaGx6a-oE0OazaIoYYw8OY3Z7WGtAZgvgoVu91MuGdQe9tuF6WcphTTzWl-shSoT6YV1gZpM3i0KH1NAQ7UDJ3uHcteSfg6GcK9wo85jcQ3QiEe2bgmIKfAYhjIAeW6_9zh7nIOnit4hvKFdmuCumqEH5-X6DS9EzflRmFMa99mufMoaA"/>
+</div>
+<p class="text-sm text-subtext-light dark:text-subtext-dark mt-2">Scan to access the agent</p>
+</div>
+</div>
+<div class="pt-6 border-t border-border-light dark:border-border-dark">
+<h3 class="text-xl font-bold">Permissions</h3>
+<p class="text-subtext-light dark:text-subtext-dark mt-1">Control who can access this public link.</p>
+<div class="mt-4 space-y-4">
+<div class="flex items-center justify-between p-4 rounded-lg border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark">
+<div>
+<h4 class="font-semibold">Enable Public Access</h4>
+<p class="text-sm text-subtext-light dark:text-subtext-dark">Anyone with the link can interact with the agent.</p>
+</div>
+<label class="relative inline-flex cursor-pointer items-center">
+<input checked="" class="peer sr-only" type="checkbox" value=""/>
+<div class="peer h-6 w-11 rounded-full bg-gray-200 after:absolute after:top-[2px] after:left-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-primary peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/30 dark:border-gray-600 dark:bg-gray-700 dark:peer-focus:ring-primary/80"></div>
+</label>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+
+</body></html>

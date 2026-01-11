@@ -1,0 +1,35 @@
+{
+  "name": "equiptalk-ai",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@google-cloud/vertexai": "^1.10.0",
+    "@prisma/client": "5.13.0",
+    "firebase": "^12.7.0",
+    "firebase-admin": "^13.6.0",
+    "next": "16.1.1",
+    "prisma": "5.13.0",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "uuid": "^13.0.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/container-queries": "^0.1.1",
+    "@tailwindcss/forms": "^0.5.11",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.1.1",
+    "firebase-tools": "^15.2.1",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}
