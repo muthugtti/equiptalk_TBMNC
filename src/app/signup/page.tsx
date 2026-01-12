@@ -1,30 +1,48 @@
 "use client";
 
 import { useState } from "react";
-import { signInWithEmailAndPassword, AuthError } from "firebase/auth";
+import { createUserWithEmailAndPassword, updateProfile, AuthError } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-export default function LoginPage() {
-    const [email, setEmail] = useState("muthu@masstechllc.com");
-    const [password, setPassword] = useState("Muthu321@");
+export default function SignupPage() {
+    const [name, setName] = useState("");
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const router = useRouter();
 
-    const handleLogin = async (e: React.FormEvent) => {
+    const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError(null);
 
+        if (password !== confirmPassword) {
+            setError("Passwords do not match.");
+            setLoading(false);
+            return;
+        }
+
         try {
-            await signInWithEmailAndPassword(auth, email, password);
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            // Update profile with display name
+            await updateProfile(userCredential.user, {
+                displayName: name
+            });
             router.push("/dashboard");
         } catch (err) {
             const firebaseError = err as AuthError;
             console.error(firebaseError);
-            setError("Invalid email or password.");
+            if (firebaseError.code === 'auth/email-already-in-use') {
+                setError("Email is already in use.");
+            } else if (firebaseError.code === 'auth/weak-password') {
+                setError("Password should be at least 6 characters.");
+            } else {
+                setError("Failed to create account. Please try again.");
+            }
         }
         setLoading(false);
     };
@@ -65,10 +83,10 @@ export default function LoginPage() {
                                     {/* Tabs */}
                                     <div>
                                         <div className="flex border-b border-gray-200 dark:border-gray-700 gap-8">
-                                            <button className="flex flex-col items-center justify-center border-b-[3px] border-b-primary text-gray-900 dark:text-white pb-[13px] pt-4">
+                                            <Link href="/login" className="flex flex-col items-center justify-center border-b-[3px] border-b-transparent text-gray-500 dark:text-gray-400 pb-[13px] pt-4">
                                                 <p className="text-sm font-bold leading-normal tracking-wide">Sign In</p>
-                                            </button>
-                                            <button className="flex flex-col items-center justify-center border-b-[3px] border-b-transparent text-gray-500 dark:text-gray-400 pb-[13px] pt-4">
+                                            </Link>
+                                            <button className="flex flex-col items-center justify-center border-b-[3px] border-b-primary text-gray-900 dark:text-white pb-[13px] pt-4">
                                                 <p className="text-sm font-bold leading-normal tracking-wide">Create Account</p>
                                             </button>
                                         </div>
@@ -76,7 +94,7 @@ export default function LoginPage() {
 
                                     {/* Headline */}
                                     <h1 className="text-gray-900 dark:text-white tracking-tight text-3xl font-bold leading-tight text-left">
-                                        Welcome Back
+                                        Create Account
                                     </h1>
 
                                     {/* Error Message */}
@@ -86,12 +104,29 @@ export default function LoginPage() {
                                         </div>
                                     )}
 
-                                    <form onSubmit={handleLogin} className="mt-8 space-y-6">
+                                    <form onSubmit={handleSignup} className="mt-8 space-y-6">
                                         <div className="space-y-4 rounded-md">
+                                            {/* Name Field */}
+                                            <div className="flex flex-col">
+                                                <label className="text-gray-800 dark:text-gray-300 text-sm font-medium leading-normal pb-2" htmlFor="name">
+                                                    Full Name
+                                                </label>
+                                                <input
+                                                    id="name"
+                                                    name="name"
+                                                    type="text"
+                                                    required
+                                                    value={name}
+                                                    onChange={(e) => setName(e.target.value)}
+                                                    placeholder="Enter your full name"
+                                                    className="flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-gray-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-gray-300 dark:border-gray-600 bg-background-light dark:bg-gray-800/50 h-12 placeholder:text-gray-500 dark:placeholder:text-gray-500 px-4 text-sm font-normal leading-normal"
+                                                />
+                                            </div>
+
                                             {/* Email Field */}
                                             <div className="flex flex-col">
                                                 <label className="text-gray-800 dark:text-gray-300 text-sm font-medium leading-normal pb-2" htmlFor="email-address">
-                                                    Email / Username
+                                                    Email
                                                 </label>
                                                 <input
                                                     id="email-address"
@@ -101,36 +136,51 @@ export default function LoginPage() {
                                                     required
                                                     value={email}
                                                     onChange={(e) => setEmail(e.target.value)}
-                                                    placeholder="Enter your email or username"
+                                                    placeholder="Enter your email"
                                                     className="flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-gray-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-gray-300 dark:border-gray-600 bg-background-light dark:bg-gray-800/50 h-12 placeholder:text-gray-500 dark:placeholder:text-gray-500 px-4 text-sm font-normal leading-normal"
                                                 />
                                             </div>
 
                                             {/* Password Field */}
                                             <div className="flex flex-col">
-                                                <div className="flex items-center justify-between">
-                                                    <label className="text-gray-800 dark:text-gray-300 text-sm font-medium leading-normal pb-2" htmlFor="password">
-                                                        Password
-                                                    </label>
-                                                    <a href="#" className="text-sm font-medium text-primary hover:text-primary/80">
-                                                        Forgot Password?
-                                                    </a>
-                                                </div>
+                                                <label className="text-gray-800 dark:text-gray-300 text-sm font-medium leading-normal pb-2" htmlFor="password">
+                                                    Password
+                                                </label>
                                                 <div className="relative flex w-full flex-1 items-stretch rounded-lg">
                                                     <input
                                                         id="password"
                                                         name="password"
                                                         type="password"
-                                                        autoComplete="current-password"
+                                                        autoComplete="new-password"
                                                         required
                                                         value={password}
                                                         onChange={(e) => setPassword(e.target.value)}
-                                                        placeholder="Enter your password"
+                                                        placeholder="Create a password"
                                                         className="flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-gray-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-gray-300 dark:border-gray-600 bg-background-light dark:bg-gray-800/50 h-12 placeholder:text-gray-500 dark:placeholder:text-gray-500 p-4 rounded-r-none border-r-0 pr-2 text-sm font-normal leading-normal"
                                                     />
                                                     <div className="text-gray-500 dark:text-gray-400 flex border border-gray-300 dark:border-gray-600 bg-background-light dark:bg-gray-800/50 items-center justify-center pr-4 rounded-r-lg border-l-0 cursor-pointer">
                                                         <span className="material-symbols-outlined text-xl">visibility</span>
                                                     </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Confirm Password Field */}
+                                            <div className="flex flex-col">
+                                                <label className="text-gray-800 dark:text-gray-300 text-sm font-medium leading-normal pb-2" htmlFor="confirm-password">
+                                                    Confirm Password
+                                                </label>
+                                                <div className="relative flex w-full flex-1 items-stretch rounded-lg">
+                                                    <input
+                                                        id="confirm-password"
+                                                        name="confirm-password"
+                                                        type="password"
+                                                        autoComplete="new-password"
+                                                        required
+                                                        value={confirmPassword}
+                                                        onChange={(e) => setConfirmPassword(e.target.value)}
+                                                        placeholder="Confirm your password"
+                                                        className="flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-gray-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-gray-300 dark:border-gray-600 bg-background-light dark:bg-gray-800/50 h-12 placeholder:text-gray-500 dark:placeholder:text-gray-500 p-4 rounded-r-none border-r-0 pr-2 text-sm font-normal leading-normal"
+                                                    />
                                                 </div>
                                             </div>
                                         </div>
@@ -142,15 +192,15 @@ export default function LoginPage() {
                                                 disabled={loading}
                                                 className="group relative flex w-full justify-center rounded-lg border border-transparent bg-primary py-3 px-4 text-sm font-bold text-white hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-background-dark disabled:opacity-70 disabled:cursor-not-allowed"
                                             >
-                                                {loading ? "Signing in..." : "Sign In"}
+                                                {loading ? "Creating Account..." : "Create Account"}
                                             </button>
                                         </div>
 
                                         {/* Secondary Link */}
                                         <div className="text-center text-sm">
-                                            <span className="text-gray-600 dark:text-gray-400">Don&apos;t have an account? </span>
-                                            <Link href="/signup" className="font-medium text-primary hover:text-primary/80">
-                                                Sign Up
+                                            <span className="text-gray-600 dark:text-gray-400">Already have an account? </span>
+                                            <Link href="/login" className="font-medium text-primary hover:text-primary/80">
+                                                Sign In
                                             </Link>
                                         </div>
                                     </form>

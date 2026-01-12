@@ -22,6 +22,18 @@ model Equipment {
   status         String   @default("OPERATIONAL") // OPERATIONAL, MAINTENANCE, DOWN
   organizationId String
   slug           String   @unique
+  imageUrl       String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+  documents      Document[]
+}
+
+model Document {
+  id          String   @id @default(uuid())
+  name        String
+  url         String
+  type        String   // e.g., "manual", "sop"
+  equipmentId String
+  equipment   Equipment @relation(fields: [equipmentId], references: [id])
+  createdAt   DateTime @default(now())
 }

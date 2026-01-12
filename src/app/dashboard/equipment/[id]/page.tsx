@@ -34,7 +34,9 @@ export default function EquipmentDetailPage({ params }: { params: Promise<{ id: 
         temperature: 0.2,
         // Public Access Fields
         publicLinkId: "eq-" + Math.random().toString(36).substring(2, 12), // Mock default for now
-        isPublicAccessEnabled: false
+        isPublicAccessEnabled: false,
+        documents: [] as any[],
+        imageUrl: ""
     });
 
     useEffect(() => {
@@ -65,7 +67,9 @@ export default function EquipmentDetailPage({ params }: { params: Promise<{ id: 
                     llmModel: data.llmModel || "GPT-4 Turbo",
                     temperature: data.temperature !== undefined ? data.temperature : 0.2,
                     publicLinkId: data.publicLinkId || "eq-" + Math.random().toString(36).substring(2, 12),
-                    isPublicAccessEnabled: data.isPublicAccessEnabled || false
+                    isPublicAccessEnabled: data.isPublicAccessEnabled || false,
+                    documents: data.documents || [],
+                    imageUrl: data.imageUrl || ""
                 });
             } else {
                 console.error("Equipment not found");
@@ -74,6 +78,73 @@ export default function EquipmentDetailPage({ params }: { params: Promise<{ id: 
             console.error("Error fetching details", error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files?.length) return;
+        const file = e.target.files[0];
+        const uploadFormData = new FormData();
+        uploadFormData.append("file", file);
+        uploadFormData.append("equipmentId", id);
+
+        setSaving(true);
+        try {
+            const uploadRes = await fetch('/api/upload', {
+                method: 'POST',
+                body: uploadFormData
+            });
+
+            if (!uploadRes.ok) throw new Error("Upload failed");
+            const uploadData = await uploadRes.json();
+
+            setFormData(prev => ({ ...prev, imageUrl: uploadData.url }));
+        } catch (error) {
+            console.error("Error uploading image", error);
+            alert("Failed to upload image");
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files?.length) return;
+        const file = e.target.files[0];
+        const uploadFormData = new FormData();
+        uploadFormData.append("file", file);
+        uploadFormData.append("equipmentId", id);
+
+        setSaving(true);
+        try {
+            // 1. Upload File
+            const uploadRes = await fetch('/api/upload', {
+                method: 'POST',
+                body: uploadFormData
+            });
+
+            if (!uploadRes.ok) throw new Error("Upload failed");
+            const uploadData = await uploadRes.json();
+
+            // 2. Save Document Record
+            const docRes = await fetch('/api/documents', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: file.name,
+                    url: uploadData.url,
+                    type: "document",
+                    equipmentId: id
+                })
+            });
+
+            if (docRes.ok) {
+                fetchEquipmentDetails(); // Refresh list
+            }
+        } catch (error) {
+            console.error("Error uploading file", error);
+            alert("Failed to upload file");
+        } finally {
+            setSaving(false);
         }
     };
 
@@ -157,14 +228,22 @@ export default function EquipmentDetailPage({ params }: { params: Promise<{ id: 
                 <aside className="lg:col-span-4 xl:col-span-3 space-y-6">
                     <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col items-center text-center">
                         <div className="relative group mb-4">
-                            {/* Mock Image */}
+                            {/* Image with overlay */}
                             <div
                                 className="bg-center bg-no-repeat aspect-square bg-cover rounded-lg w-32 h-32 bg-gray-100 dark:bg-gray-700"
-                                style={{ backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuCgLXcDY4ZjP55LKJrTcEKJPDuFFlPkdfJnAlECaXAqSp6e4Du1wwCCsN9pvGKBcWpYMHWacve7vs_MQwIalif_aBG-mA5WTd9rAFHdgqQnVb-_NUciO_WLPQXw7ygzJ7wZP4KLdxHUIfIaWOddGTe5fr5BnInZ6fRkcLZe7gOeBe8bCNiEpPJx0EOK123OVfPFqVFHzFn0KXrNpRGnMI2i1Z7Uuv-OTQE1MTclupPRcd_Hf3udqqNAun6yePhQXCwhDO8neJixbUYd")' }}
+                                style={{
+                                    backgroundImage: `url("${formData.imageUrl || 'https://lh3.googleusercontent.com/aida-public/AB6AXuCgLXcDY4ZjP55LKJrTcEKJPDuFFlPkdfJnAlECaXAqSp6e4Du1wwCCsN9pvGKBcWpYMHWacve7vs_MQwIalif_aBG-mA5WTd9rAFHdgqQnVb-_NUciO_WLPQXw7ygzJ7wZP4KLdxHUIfIaWOddGTe5fr5BnInZ6fRkcLZe7gOeBe8bCNiEpPJx0EOK123OVfPFqVFHzFn0KXrNpRGnMI2i1Z7Uuv-OTQE1MTclupPRcd_Hf3udqqNAun6yePhQXCwhDO8neJixbUYd'}")`
+                                }}
                             ></div>
-                            <button className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                            <label className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
                                 <span className="material-symbols-outlined mr-2">upload_file</span> Change
-                            </button>
+                                <input
+                                    type="file"
+                                    className="hidden"
+                                    onChange={handleImageUpload}
+                                    accept="image/*"
+                                />
+                            </label>
                         </div>
                         <h2 className="text-lg font-bold text-gray-900 dark:text-white">{formData.name}</h2>
 
@@ -263,51 +342,43 @@ export default function EquipmentDetailPage({ params }: { params: Promise<{ id: 
                                     </div>
 
                                     {/* Upload Area */}
-                                    <div className="flex flex-col items-center justify-center w-full p-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl text-center bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer">
+                                    <div className="flex flex-col items-center justify-center w-full p-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl text-center bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
                                         <span className="material-symbols-outlined text-5xl text-gray-400">cloud_upload</span>
-                                        <p className="mt-2 font-semibold text-gray-900 dark:text-white">Drag & drop files here</p>
-                                        <p className="text-sm text-gray-500">or</p>
-                                        <button className="mt-2 text-sm font-bold text-primary hover:underline">Browse files</button>
+                                        <p className="mt-2 font-semibold text-gray-900 dark:text-white">Upload Documents</p>
+                                        <label className="mt-2 cursor-pointer">
+                                            <span className="text-sm font-bold text-primary hover:underline">Browse files</span>
+                                            <input
+                                                type="file"
+                                                className="hidden"
+                                                onChange={handleFileUpload}
+                                                accept=".pdf,.docx,.txt"
+                                            />
+                                        </label>
                                         <p className="text-xs text-gray-400 mt-4">Supported file types: PDF, DOCX, TXT</p>
                                     </div>
 
                                     {/* File List */}
                                     <div className="space-y-3">
                                         <h4 className="font-bold text-gray-900 dark:text-white">Uploaded Documents</h4>
-                                        {/* Mock Documents */}
-                                        <div className="flex items-center justify-between p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-primary/30 transition-colors">
-                                            <div className="flex items-center gap-4">
-                                                <span className="material-symbols-outlined text-red-500 text-3xl">picture_as_pdf</span>
-                                                <div>
-                                                    <p className="font-medium text-gray-900 dark:text-white">{formData.name.replace(/\s+/g, '_')}_User_Manual.pdf</p>
-                                                    <p className="text-sm text-gray-500">Uploaded on 24 July, 2024</p>
+                                        {formData.documents && formData.documents.length > 0 ? (
+                                            formData.documents.map((doc: any) => (
+                                                <div key={doc.id} className="flex items-center justify-between p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-primary/30 transition-colors">
+                                                    <div className="flex items-center gap-4">
+                                                        <span className="material-symbols-outlined text-blue-500 text-3xl">description</span>
+                                                        <div>
+                                                            <p className="font-medium text-gray-900 dark:text-white">{doc.name}</p>
+                                                            <p className="text-sm text-gray-500">Uploaded on {new Date(doc.createdAt).toLocaleDateString()}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <a href={doc.url} target="_blank" rel="noopener noreferrer" className="p-2 rounded-full hover:bg-primary/10 text-gray-400 hover:text-primary"><span className="material-symbols-outlined text-xl">visibility</span></a>
+                                                        <button className="p-2 rounded-full hover:bg-red-500/10 text-gray-400 hover:text-red-500"><span className="material-symbols-outlined text-xl">delete</span></button>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <button className="p-2 rounded-full hover:bg-primary/10 text-gray-400 hover:text-primary"><span className="material-symbols-outlined text-xl">visibility</span></button>
-                                                <button className="p-2 rounded-full hover:bg-red-500/10 text-gray-400 hover:text-red-500"><span className="material-symbols-outlined text-xl">delete</span></button>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center justify-between p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-primary/30 transition-colors">
-                                            <div className="flex items-center gap-4">
-                                                <span className="material-symbols-outlined text-blue-500 text-3xl">description</span>
-                                                <div>
-                                                    <p className="font-medium text-gray-900 dark:text-white">Standard_Operating_Procedures.docx</p>
-                                                    <p className="text-sm text-gray-500">Uploaded on 22 July, 2024</p>
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <button className="p-2 rounded-full hover:bg-primary/10 text-gray-400 hover:text-primary"><span className="material-symbols-outlined text-xl">visibility</span></button>
-                                                <button className="p-2 rounded-full hover:bg-red-500/10 text-gray-400 hover:text-red-500"><span className="material-symbols-outlined text-xl">delete</span></button>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex justify-end pt-4">
-                                        <button className="flex min-w-[120px] cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-lg h-11 px-6 bg-primary text-white text-sm font-bold tracking-wide hover:bg-primary/90">
-                                            <span className="material-symbols-outlined text-xl">model_training</span>
-                                            <span className="truncate">Update Agent</span>
-                                        </button>
+                                            ))
+                                        ) : (
+                                            <p className="text-sm text-gray-500">No documents uploaded yet.</p>
+                                        )}
                                     </div>
                                 </div>
                             )}

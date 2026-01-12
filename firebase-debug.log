@@ -861,3 +861,359 @@
 [debug] [2026-01-11T06:03:00.840Z] Error: EPERM: operation not permitted, symlink 'C:\Users\muthu\OneDrive - Masstechllc\01_MASS Tech\Projects\Toyota\Equiptalk\equiptalk-ai\node_modules\firebase-admin' -> 'C:\Users\muthu\OneDrive - Masstechllc\01_MASS Tech\Projects\Toyota\Equiptalk\equiptalk-ai\.firebase\equiptalk-317d8\functions\.next\node_modules\firebase-admin-a14c8a5423a75469'
 [error] 
 [error] Error: An unexpected error has occurred.
+[debug] [2026-01-11T06:24:00.256Z] ----------------------------------------------------------------------
+[debug] [2026-01-11T06:24:00.258Z] Command:       C:\Program Files\nodejs\node.exe D:\Equiptalk\equiptalk-ai\node_modules\firebase-tools\lib\bin\firebase.js deploy
+[debug] [2026-01-11T06:24:00.259Z] CLI Version:   15.2.1
+[debug] [2026-01-11T06:24:00.259Z] Platform:      win32
+[debug] [2026-01-11T06:24:00.259Z] Node Version:  v20.13.1
+[debug] [2026-01-11T06:24:00.259Z] Time:          Sun Jan 11 2026 01:24:00 GMT-0500 (Eastern Standard Time)
+[debug] [2026-01-11T06:24:00.259Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-01-11T06:24:03.097Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-11T06:24:03.097Z] > authorizing via signed-in user (muthugtti@gmail.com)
+[debug] [2026-01-11T06:24:03.097Z] [iam] checking project equiptalk-317d8 for permissions ["firebase.projects.get","firebasehosting.sites.update"]
+[debug] [2026-01-11T06:24:03.098Z] Checked if tokens are valid: false, expires at: 1768112927836
+[debug] [2026-01-11T06:24:03.098Z] Checked if tokens are valid: false, expires at: 1768112927836
+[debug] [2026-01-11T06:24:03.098Z] > refreshing access token with scopes: []
+[debug] [2026-01-11T06:24:03.099Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-01-11T06:24:03.099Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-01-11T06:24:03.287Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2026-01-11T06:24:03.287Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-01-11T06:24:03.297Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/equiptalk-317d8:testIamPermissions [none]
+[debug] [2026-01-11T06:24:03.297Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/equiptalk-317d8:testIamPermissions x-goog-quota-user=projects/equiptalk-317d8
+[debug] [2026-01-11T06:24:03.297Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/equiptalk-317d8:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2026-01-11T06:24:03.504Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/equiptalk-317d8:testIamPermissions 200
+[debug] [2026-01-11T06:24:03.504Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/equiptalk-317d8:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2026-01-11T06:24:03.505Z] Checked if tokens are valid: true, expires at: 1768116242288
+[debug] [2026-01-11T06:24:03.505Z] Checked if tokens are valid: true, expires at: 1768116242288
+[debug] [2026-01-11T06:24:03.505Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/equiptalk-317d8 [none]
+[debug] [2026-01-11T06:24:03.787Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/equiptalk-317d8 200
+[debug] [2026-01-11T06:24:03.787Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/equiptalk-317d8 {"projectId":"equiptalk-317d8","projectNumber":"290928110040","displayName":"Equiptalk","name":"projects/equiptalk-317d8","resources":{"hostingSite":"equiptalk-317d8"},"state":"ACTIVE","etag":"1_0912439e-3374-4bd8-8574-66c17ed0a832"}
+[debug] [2026-01-11T06:24:08.045Z] defaultcredentials: writing to file C:\Users\muthu\AppData\Roaming\firebase\muthugtti_gmail_com_application_default_credentials.json
+[debug] [2026-01-11T06:24:08.046Z] Checked if tokens are valid: true, expires at: 1768116242288
+[debug] [2026-01-11T06:24:08.046Z] Checked if tokens are valid: true, expires at: 1768116242288
+[debug] [2026-01-11T06:24:08.046Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/equiptalk-317d8/sites pageToken=&pageSize=10
+[debug] [2026-01-11T06:24:08.675Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/equiptalk-317d8/sites 200
+[debug] [2026-01-11T06:24:08.675Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/equiptalk-317d8/sites {"sites":[{"name":"projects/equiptalk-317d8/sites/equiptalk-317d8","defaultUrl":"https://equiptalk-317d8.web.app","type":"DEFAULT_SITE"}]}
+[debug] [2026-01-11T06:24:08.675Z] Checked if tokens are valid: true, expires at: 1768116242288
+[debug] [2026-01-11T06:24:08.675Z] Checked if tokens are valid: true, expires at: 1768116242288
+[debug] [2026-01-11T06:24:08.675Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/equiptalk-317d8/sites 
+[debug] [2026-01-11T06:24:08.832Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/equiptalk-317d8/sites 200
+[debug] [2026-01-11T06:24:08.832Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/equiptalk-317d8/sites {"sites":[{"name":"projects/equiptalk-317d8/sites/equiptalk-317d8","defaultUrl":"https://equiptalk-317d8.web.app","type":"DEFAULT_SITE"}]}
+[debug] [2026-01-11T06:24:08.832Z] Checked if tokens are valid: true, expires at: 1768116242288
+[debug] [2026-01-11T06:24:08.832Z] Checked if tokens are valid: true, expires at: 1768116242288
+[debug] [2026-01-11T06:24:08.833Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/equiptalk-317d8/webApps/-/config [none]
+[debug] [2026-01-11T06:24:09.263Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/equiptalk-317d8/webApps/-/config 200
+[debug] [2026-01-11T06:24:09.263Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/equiptalk-317d8/webApps/-/config {"projectId":"equiptalk-317d8","appId":"1:290928110040:web:713bdcb0e83db6688f2aad","storageBucket":"equiptalk-317d8.firebasestorage.app","apiKey":"AIzaSyCRL5oTlhVR5cdaqkwpLZGYjQhJxKGKzBs","authDomain":"equiptalk-317d8.firebaseapp.com","messagingSenderId":"290928110040","projectNumber":"290928110040","version":"2"}
+[info] 
+   Thank you for trying our early preview of Next.js support on Firebase Hosting.
+   During the preview, support is best-effort and breaking changes can be expected. Proceed with caution.
+   The integration is known to work with Next.js version 12 - 15.0. You may encounter errors.
+
+   Documentation: https://firebase.google.com/docs/hosting/frameworks/nextjs
+   File a bug: https://github.com/firebase/firebase-tools/issues/new?template=bug_report.md
+   Submit a feature request: https://github.com/firebase/firebase-tools/issues/new?template=feature_request.md
+
+   We'd love to learn from you. Express your interest in helping us shape the future of Firebase Hosting: https://goo.gle/41enW5X
+
+[debug] [2026-01-11T06:24:16.394Z] Checked if tokens are valid: true, expires at: 1768116242288
+[debug] [2026-01-11T06:24:16.394Z] Checked if tokens are valid: true, expires at: 1768116242288
+[debug] [2026-01-11T06:24:16.394Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/equiptalk-317d8/sites/equiptalk-317d8 [none]
+[debug] [2026-01-11T06:24:16.675Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/equiptalk-317d8/sites/equiptalk-317d8 200
+[debug] [2026-01-11T06:24:16.675Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/equiptalk-317d8/sites/equiptalk-317d8 {"name":"projects/equiptalk-317d8/sites/equiptalk-317d8","defaultUrl":"https://equiptalk-317d8.web.app","type":"DEFAULT_SITE"}
+[info] ▲ Next.js 16.1.1 (Turbopack)
+
+[info] - Environments: .env.local, .env
+
+
+[info]   Creating an optimized production build ...
+
+[info] ✓ Compiled successfully in 1543.2ms
+
+[info]   Running TypeScript ...
+
+[info]   Collecting page data using 19 workers ...
+
+[info]   Generating static pages using 19 workers (0/11) ...
+
+[info]   Generating static pages using 19 workers (2/11) 
+
+[info]   Generating static pages using 19 workers (5/11) 
+
+[info]   Generating static pages using 19 workers (8/11) 
+
+[info] ✓ Generating static pages using 19 workers (11/11) in 856.8ms
+
+[info]   Finalizing page optimization ...
+
+[info] 
+
+[info] Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /api/equipment
+├ ƒ /api/equipment/[id]
+├ ○ /chat
+├ ○ /dashboard
+├ ○ /dashboard/equipment
+├ ƒ /dashboard/equipment/[id]
+├ ○ /dashboard/incidents
+├ ○ /login
+└ ○ /qr
+
+
+[info] 
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+
+[info] Building a Cloud Function to run this application. This is needed due to:
+[info]  • non-static component /api/equipment/[id]/route
+[info]  • non-static component /api/equipment/route
+[info]  • non-static component /dashboard/equipment/[id]/page
+[info] 
+[debug] [2026-01-11T06:24:25.522Z] Error: EPERM: operation not permitted, rmdir 'D:\Equiptalk\equiptalk-ai\.firebase\equiptalk-317d8\hosting\_next\static\tHh7kGrEu-M1cxCUpatoC'
+[error] 
+[error] Error: An unexpected error has occurred.
+[debug] [2026-01-11T06:24:35.485Z] ----------------------------------------------------------------------
+[debug] [2026-01-11T06:24:35.487Z] Command:       C:\Program Files\nodejs\node.exe D:\Equiptalk\equiptalk-ai\node_modules\firebase-tools\lib\bin\firebase.js deploy --debug
+[debug] [2026-01-11T06:24:35.487Z] CLI Version:   15.2.1
+[debug] [2026-01-11T06:24:35.488Z] Platform:      win32
+[debug] [2026-01-11T06:24:35.488Z] Node Version:  v20.13.1
+[debug] [2026-01-11T06:24:35.488Z] Time:          Sun Jan 11 2026 01:24:35 GMT-0500 (Eastern Standard Time)
+[debug] [2026-01-11T06:24:35.488Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-01-11T06:24:36.536Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-11T06:24:36.537Z] > authorizing via signed-in user (muthugtti@gmail.com)
+[debug] [2026-01-11T06:24:36.537Z] [iam] checking project equiptalk-317d8 for permissions ["firebase.projects.get","firebasehosting.sites.update"]
+[debug] [2026-01-11T06:24:36.538Z] Checked if tokens are valid: true, expires at: 1768116242288
+[debug] [2026-01-11T06:24:36.538Z] Checked if tokens are valid: true, expires at: 1768116242288
+[debug] [2026-01-11T06:24:36.539Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/equiptalk-317d8:testIamPermissions [none]
+[debug] [2026-01-11T06:24:36.539Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/equiptalk-317d8:testIamPermissions x-goog-quota-user=projects/equiptalk-317d8
+[debug] [2026-01-11T06:24:36.539Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/equiptalk-317d8:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2026-01-11T06:24:36.743Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/equiptalk-317d8:testIamPermissions 200
+[debug] [2026-01-11T06:24:36.743Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/equiptalk-317d8:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2026-01-11T06:24:36.743Z] Checked if tokens are valid: true, expires at: 1768116242288
+[debug] [2026-01-11T06:24:36.744Z] Checked if tokens are valid: true, expires at: 1768116242288
+[debug] [2026-01-11T06:24:36.744Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/equiptalk-317d8 [none]
+[debug] [2026-01-11T06:24:36.990Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/equiptalk-317d8 200
+[debug] [2026-01-11T06:24:36.991Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/equiptalk-317d8 {"projectId":"equiptalk-317d8","projectNumber":"290928110040","displayName":"Equiptalk","name":"projects/equiptalk-317d8","resources":{"hostingSite":"equiptalk-317d8"},"state":"ACTIVE","etag":"1_0912439e-3374-4bd8-8574-66c17ed0a832"}
+[debug] [2026-01-11T06:24:39.708Z] defaultcredentials: writing to file C:\Users\muthu\AppData\Roaming\firebase\muthugtti_gmail_com_application_default_credentials.json
+[debug] [2026-01-11T06:24:39.709Z] Checked if tokens are valid: true, expires at: 1768116242288
+[debug] [2026-01-11T06:24:39.709Z] Checked if tokens are valid: true, expires at: 1768116242288
+[debug] [2026-01-11T06:24:39.709Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/equiptalk-317d8/sites pageToken=&pageSize=10
+[debug] [2026-01-11T06:24:40.147Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/equiptalk-317d8/sites 200
+[debug] [2026-01-11T06:24:40.147Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/equiptalk-317d8/sites {"sites":[{"name":"projects/equiptalk-317d8/sites/equiptalk-317d8","defaultUrl":"https://equiptalk-317d8.web.app","type":"DEFAULT_SITE"}]}
+[debug] [2026-01-11T06:24:40.148Z] Checked if tokens are valid: true, expires at: 1768116242288
+[debug] [2026-01-11T06:24:40.148Z] Checked if tokens are valid: true, expires at: 1768116242288
+[debug] [2026-01-11T06:24:40.148Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/equiptalk-317d8/sites 
+[debug] [2026-01-11T06:24:40.286Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/equiptalk-317d8/sites 200
+[debug] [2026-01-11T06:24:40.286Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/equiptalk-317d8/sites {"sites":[{"name":"projects/equiptalk-317d8/sites/equiptalk-317d8","defaultUrl":"https://equiptalk-317d8.web.app","type":"DEFAULT_SITE"}]}
+[debug] [2026-01-11T06:24:40.287Z] Checked if tokens are valid: true, expires at: 1768116242288
+[debug] [2026-01-11T06:24:40.287Z] Checked if tokens are valid: true, expires at: 1768116242288
+[debug] [2026-01-11T06:24:40.287Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/equiptalk-317d8/webApps/-/config [none]
+[debug] [2026-01-11T06:24:40.470Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/equiptalk-317d8/webApps/-/config 200
+[debug] [2026-01-11T06:24:40.470Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/equiptalk-317d8/webApps/-/config {"projectId":"equiptalk-317d8","appId":"1:290928110040:web:713bdcb0e83db6688f2aad","storageBucket":"equiptalk-317d8.firebasestorage.app","apiKey":"AIzaSyCRL5oTlhVR5cdaqkwpLZGYjQhJxKGKzBs","authDomain":"equiptalk-317d8.firebaseapp.com","messagingSenderId":"290928110040","projectNumber":"290928110040","version":"2"}
+[info] 
+   Thank you for trying our early preview of Next.js support on Firebase Hosting.
+   During the preview, support is best-effort and breaking changes can be expected. Proceed with caution.
+   The integration is known to work with Next.js version 12 - 15.0. You may encounter errors.
+
+   Documentation: https://firebase.google.com/docs/hosting/frameworks/nextjs
+   File a bug: https://github.com/firebase/firebase-tools/issues/new?template=bug_report.md
+   Submit a feature request: https://github.com/firebase/firebase-tools/issues/new?template=feature_request.md
+
+   We'd love to learn from you. Express your interest in helping us shape the future of Firebase Hosting: https://goo.gle/41enW5X
+
+[debug] [2026-01-11T06:24:47.458Z] Checked if tokens are valid: true, expires at: 1768116242288
+[debug] [2026-01-11T06:24:47.458Z] Checked if tokens are valid: true, expires at: 1768116242288
+[debug] [2026-01-11T06:24:47.458Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/equiptalk-317d8/sites/equiptalk-317d8 [none]
+[debug] [2026-01-11T06:24:47.860Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/equiptalk-317d8/sites/equiptalk-317d8 200
+[debug] [2026-01-11T06:24:47.860Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/equiptalk-317d8/sites/equiptalk-317d8 {"name":"projects/equiptalk-317d8/sites/equiptalk-317d8","defaultUrl":"https://equiptalk-317d8.web.app","type":"DEFAULT_SITE"}
+[info] ▲ Next.js 16.1.1 (Turbopack)
+
+[info] - Environments: .env.local, .env
+
+
+[info]   Creating an optimized production build ...
+
+[info] 
+[140.90ms] [@tailwindcss/postcss] src\app\globals.css
+
+[info] [  0.05ms]   ↳ Quick bail check
+[ 57.09ms]   ↳ Setup compiler
+[  0.26ms]     ↳ PostCSS AST -> Tailwind CSS AST
+[ 56.81ms]     ↳ Create compiler
+[  0.21ms]   ↳ Register full rebuild paths
+[  1.17ms]   ↳ Setup scanner
+[ 11.01ms]   ↳ Scan for candidates
+[ 17.82ms]   ↳ Register dependency messages
+[ 30.41ms]   ↳ Build utilities
+[ 20.06ms]   ↳ Optimization
+[  0.72ms]     ↳ AST -> CSS
+[ 12.51ms]     ↳ Lightning CSS
+[  6.80ms]     ↳ CSS -> PostCSS AST
+[  2.73ms]   ↳ Update PostCSS AST
+
+
+[info] ✓ Compiled successfully in 1589.1ms
+
+[info]   Running TypeScript ...
+
+[info]   Collecting page data using 19 workers ...
+
+[info]   Generating static pages using 19 workers (0/11) ...
+
+[info]   Generating static pages using 19 workers (2/11) 
+
+[info]   Generating static pages using 19 workers (5/11) 
+
+[info]   Generating static pages using 19 workers (8/11) 
+
+[info] ✓ Generating static pages using 19 workers (11/11) in 864.3ms
+
+[info]   Finalizing page optimization ...
+
+[info] 
+
+[info] Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /api/equipment
+├ ƒ /api/equipment/[id]
+├ ○ /chat
+├ ○ /dashboard
+├ ○ /dashboard/equipment
+├ ƒ /dashboard/equipment/[id]
+├ ○ /dashboard/incidents
+├ ○ /login
+└ ○ /qr
+
+
+[info] 
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+
+[info] Building a Cloud Function to run this application. This is needed due to:
+[info]  • non-static component /api/equipment/[id]/route
+[info]  • non-static component /api/equipment/route
+[info]  • non-static component /dashboard/equipment/[id]/page
+[info] 
+[debug] [2026-01-11T06:24:57.006Z] Error: EPERM: operation not permitted, rmdir 'D:\Equiptalk\equiptalk-ai\.firebase\equiptalk-317d8\hosting\_next\static\tHh7kGrEu-M1cxCUpatoC'
+[error] 
+[error] Error: An unexpected error has occurred.
+[debug] [2026-01-11T06:25:13.985Z] ----------------------------------------------------------------------
+[debug] [2026-01-11T06:25:13.987Z] Command:       C:\Program Files\nodejs\node.exe D:\Equiptalk\equiptalk-ai\node_modules\firebase-tools\lib\bin\firebase.js deploy
+[debug] [2026-01-11T06:25:13.987Z] CLI Version:   15.2.1
+[debug] [2026-01-11T06:25:13.987Z] Platform:      win32
+[debug] [2026-01-11T06:25:13.987Z] Node Version:  v20.13.1
+[debug] [2026-01-11T06:25:13.988Z] Time:          Sun Jan 11 2026 01:25:13 GMT-0500 (Eastern Standard Time)
+[debug] [2026-01-11T06:25:13.988Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-01-11T06:25:15.087Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-01-11T06:25:15.088Z] > authorizing via signed-in user (muthugtti@gmail.com)
+[debug] [2026-01-11T06:25:15.088Z] [iam] checking project equiptalk-317d8 for permissions ["firebase.projects.get","firebasehosting.sites.update"]
+[debug] [2026-01-11T06:25:15.089Z] Checked if tokens are valid: true, expires at: 1768116242288
+[debug] [2026-01-11T06:25:15.089Z] Checked if tokens are valid: true, expires at: 1768116242288
+[debug] [2026-01-11T06:25:15.089Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/equiptalk-317d8:testIamPermissions [none]
+[debug] [2026-01-11T06:25:15.090Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/equiptalk-317d8:testIamPermissions x-goog-quota-user=projects/equiptalk-317d8
+[debug] [2026-01-11T06:25:15.090Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/equiptalk-317d8:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2026-01-11T06:25:15.261Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/equiptalk-317d8:testIamPermissions 200
+[debug] [2026-01-11T06:25:15.261Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/equiptalk-317d8:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2026-01-11T06:25:15.262Z] Checked if tokens are valid: true, expires at: 1768116242288
+[debug] [2026-01-11T06:25:15.262Z] Checked if tokens are valid: true, expires at: 1768116242288
+[debug] [2026-01-11T06:25:15.262Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/equiptalk-317d8 [none]
+[debug] [2026-01-11T06:25:15.474Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/equiptalk-317d8 200
+[debug] [2026-01-11T06:25:15.474Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/equiptalk-317d8 {"projectId":"equiptalk-317d8","projectNumber":"290928110040","displayName":"Equiptalk","name":"projects/equiptalk-317d8","resources":{"hostingSite":"equiptalk-317d8"},"state":"ACTIVE","etag":"1_0912439e-3374-4bd8-8574-66c17ed0a832"}
+[debug] [2026-01-11T06:25:18.536Z] defaultcredentials: writing to file C:\Users\muthu\AppData\Roaming\firebase\muthugtti_gmail_com_application_default_credentials.json
+[debug] [2026-01-11T06:25:18.537Z] Checked if tokens are valid: true, expires at: 1768116242288
+[debug] [2026-01-11T06:25:18.537Z] Checked if tokens are valid: true, expires at: 1768116242288
+[debug] [2026-01-11T06:25:18.538Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/equiptalk-317d8/sites pageToken=&pageSize=10
+[debug] [2026-01-11T06:25:18.832Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/equiptalk-317d8/sites 200
+[debug] [2026-01-11T06:25:18.832Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/equiptalk-317d8/sites {"sites":[{"name":"projects/equiptalk-317d8/sites/equiptalk-317d8","defaultUrl":"https://equiptalk-317d8.web.app","type":"DEFAULT_SITE"}]}
+[debug] [2026-01-11T06:25:18.832Z] Checked if tokens are valid: true, expires at: 1768116242288
+[debug] [2026-01-11T06:25:18.832Z] Checked if tokens are valid: true, expires at: 1768116242288
+[debug] [2026-01-11T06:25:18.833Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/equiptalk-317d8/sites 
+[debug] [2026-01-11T06:25:18.974Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/equiptalk-317d8/sites 200
+[debug] [2026-01-11T06:25:18.974Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/equiptalk-317d8/sites {"sites":[{"name":"projects/equiptalk-317d8/sites/equiptalk-317d8","defaultUrl":"https://equiptalk-317d8.web.app","type":"DEFAULT_SITE"}]}
+[debug] [2026-01-11T06:25:18.974Z] Checked if tokens are valid: true, expires at: 1768116242288
+[debug] [2026-01-11T06:25:18.974Z] Checked if tokens are valid: true, expires at: 1768116242288
+[debug] [2026-01-11T06:25:18.974Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/equiptalk-317d8/webApps/-/config [none]
+[debug] [2026-01-11T06:25:19.211Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/equiptalk-317d8/webApps/-/config 200
+[debug] [2026-01-11T06:25:19.212Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/equiptalk-317d8/webApps/-/config {"projectId":"equiptalk-317d8","appId":"1:290928110040:web:713bdcb0e83db6688f2aad","storageBucket":"equiptalk-317d8.firebasestorage.app","apiKey":"AIzaSyCRL5oTlhVR5cdaqkwpLZGYjQhJxKGKzBs","authDomain":"equiptalk-317d8.firebaseapp.com","messagingSenderId":"290928110040","projectNumber":"290928110040","version":"2"}
+[info] 
+   Thank you for trying our early preview of Next.js support on Firebase Hosting.
+   During the preview, support is best-effort and breaking changes can be expected. Proceed with caution.
+   The integration is known to work with Next.js version 12 - 15.0. You may encounter errors.
+
+   Documentation: https://firebase.google.com/docs/hosting/frameworks/nextjs
+   File a bug: https://github.com/firebase/firebase-tools/issues/new?template=bug_report.md
+   Submit a feature request: https://github.com/firebase/firebase-tools/issues/new?template=feature_request.md
+
+   We'd love to learn from you. Express your interest in helping us shape the future of Firebase Hosting: https://goo.gle/41enW5X
+
+[debug] [2026-01-11T06:25:27.317Z] Checked if tokens are valid: true, expires at: 1768116242288
+[debug] [2026-01-11T06:25:27.317Z] Checked if tokens are valid: true, expires at: 1768116242288
+[debug] [2026-01-11T06:25:27.318Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/equiptalk-317d8/sites/equiptalk-317d8 [none]
+[debug] [2026-01-11T06:25:27.679Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/equiptalk-317d8/sites/equiptalk-317d8 200
+[debug] [2026-01-11T06:25:27.679Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/equiptalk-317d8/sites/equiptalk-317d8 {"name":"projects/equiptalk-317d8/sites/equiptalk-317d8","defaultUrl":"https://equiptalk-317d8.web.app","type":"DEFAULT_SITE"}
+[info] ▲ Next.js 16.1.1 (Turbopack)
+
+[info] - Environments: .env.local, .env
+
+
+[info]   Creating an optimized production build ...
+
+[info] ✓ Compiled successfully in 1583.6ms
+
+[info]   Running TypeScript ...
+
+[info]   Collecting page data using 19 workers ...
+
+[info]   Generating static pages using 19 workers (0/11) ...
+
+[info]   Generating static pages using 19 workers (2/11) 
+
+[info]   Generating static pages using 19 workers (5/11) 
+
+[info]   Generating static pages using 19 workers (8/11) 
+
+[info] ✓ Generating static pages using 19 workers (11/11) in 852.7ms
+
+[info]   Finalizing page optimization ...
+
+[info] 
+
+[info] Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /api/equipment
+├ ƒ /api/equipment/[id]
+├ ○ /chat
+├ ○ /dashboard
+├ ○ /dashboard/equipment
+├ ƒ /dashboard/equipment/[id]
+├ ○ /dashboard/incidents
+├ ○ /login
+└ ○ /qr
+
+
+[info] 
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+
+[info] Building a Cloud Function to run this application. This is needed due to:
+[info]  • non-static component /api/equipment/[id]/route
+[info]  • non-static component /api/equipment/route
+[info]  • non-static component /dashboard/equipment/[id]/page
+[info] 
+[debug] [2026-01-11T06:25:37.057Z] Checked if tokens are valid: true, expires at: 1768116242288
+[debug] [2026-01-11T06:25:37.057Z] Checked if tokens are valid: true, expires at: 1768116242288
+[debug] [2026-01-11T06:25:37.057Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/equiptalk-317d8/sites/equiptalk-317d8 [none]
+[debug] [2026-01-11T06:25:37.315Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/equiptalk-317d8/sites/equiptalk-317d8 200
+[debug] [2026-01-11T06:25:37.315Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/equiptalk-317d8/sites/equiptalk-317d8 {"name":"projects/equiptalk-317d8/sites/equiptalk-317d8","defaultUrl":"https://equiptalk-317d8.web.app","type":"DEFAULT_SITE"}
+[debug] [2026-01-11T06:25:37.847Z] Error: EPERM: operation not permitted, symlink 'D:\Equiptalk\equiptalk-ai\node_modules\firebase-admin' -> 'D:\Equiptalk\equiptalk-ai\.firebase\equiptalk-317d8\functions\.next\node_modules\firebase-admin-a14c8a5423a75469'
+[error] 
+[error] Error: An unexpected error has occurred.

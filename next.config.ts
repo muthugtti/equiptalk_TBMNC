@@ -11,8 +11,9 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'fonts.gstatic.com',
       }
-    ],
+    ]
   },
+  output: 'standalone',
 };
 
 export default nextConfig;

@@ -149,7 +149,7 @@ self.__SERVER_FILES_MANIFEST={
       "isExperimentalCompile": false
     }
   },
-  "appDir": "C:\\Users\\muthu\\OneDrive - Masstechllc\\01_MASS Tech\\Projects\\Toyota\\Equiptalk\\equiptalk-ai",
+  "appDir": "D:\\Equiptalk\\equiptalk-ai",
   "relativeAppDir": "",
   "files": [
     ".next\\routes-manifest.json",
