@@ -18,20 +18,35 @@ If you set up GitHub Actions via `firebase init`, a service account was created 
 To find it:
 1.  Go to [GCP Console > IAM & Admin > Service Accounts](https://console.cloud.google.com/iam-admin/serviceaccounts?project=equiptalk-317d8).
 2.  Look for an account named like `github-action-xxxx` or `firebase-adminsdk-xxxx`.
-3.  Note its email address (e.g., `github-action-12345@equiptalk-317d8.iam.gserviceaccount.com`).
+3.  Note its email address (e.g., `firebase-adminsdk-xxxxx@equiptalk-xxxxx.iam.gserviceaccount.com`).
+4.  User needs to grant the following roles to this service account:
+    - **Cloud Functions Developer**
+    - **Cloud Run Admin**
+    - **Service Account User**
+    - **Artifact Registry Admin** (Needed for cleanup policies)
+    - **Firebase Hosting Admin**
+    - **Firebase Admin**
+    - **Compute Viewer** (Needed for Gen 2 function deployment checks)
 
 ### B. Enable APIs
 Enable the necessary Google Cloud APIs for your project:
 ```bash
 # Replace YOUR_PROJECT_ID with your actual Firebase project ID
 gcloud services enable \
-  run.googleapis.com \
-  sqladmin.googleapis.com \
-  secretmanager.googleapis.com \
-  cloudbuild.googleapis.com \
-  compute.googleapis.com \
-  storage.googleapis.com \
-  --project=YOUR_PROJECT_ID
+    cloudfunctions.googleapis.com \
+    cloudbuild.googleapis.com \
+    artifactregistry.googleapis.com \
+    run.googleapis.com \
+    sqladmin.googleapis.com \
+    secretmanager.googleapis.com \
+    compute.googleapis.com \
+    storage.googleapis.com \
+    eventarc.googleapis.com \
+    pubsub.googleapis.com \
+    firebaseextensions.googleapis.com \
+    runtimeconfig.googleapis.com \
+    cloudbilling.googleapis.com \
+    --project=YOUR_PROJECT_ID
 ```
 
 ### B. Create Cloud SQL Instance (PostgreSQL)

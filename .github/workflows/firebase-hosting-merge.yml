@@ -17,11 +17,13 @@ jobs:
           NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: '${{ secrets.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET }}'
           NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: '${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}'
           NEXT_PUBLIC_FIREBASE_APP_ID: '${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }}'
-      - uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: '${{ secrets.GITHUB_TOKEN }}'
-          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_EQUIPTALK_317D8 }}'
-          channelId: live
-          projectId: equiptalk-317d8
+      - name: Deploy to Firebase
         env:
+          FIREBASE_SERVICE_ACCOUNT_JSON: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_EQUIPTALK_317D8 }}'
           FIREBASE_CLI_EXPERIMENTS: webframeworks
+        run: |
+          echo "$FIREBASE_SERVICE_ACCOUNT_JSON" > permission-key.json
+          export GOOGLE_APPLICATION_CREDENTIALS=permission-key.json
+          npm install -g firebase-tools
+          firebase deploy --only hosting --project equiptalk-317d8 --force
+
