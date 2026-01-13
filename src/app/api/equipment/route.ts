@@ -19,7 +19,13 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
     try {
-        const body = await req.json();
+        let body;
+        try {
+            body = await req.json();
+        } catch (e) {
+            return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+        }
+
         const { name, type, model, serialNumber, status, organizationId } = body;
 
         if (!name || !type || !organizationId) {
@@ -51,8 +57,11 @@ export async function POST(req: NextRequest) {
         });
 
         return NextResponse.json(newEquipment, { status: 201 });
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error creating equipment:", error);
-        return NextResponse.json({ error: "Failed to create equipment" }, { status: 500 });
+        return NextResponse.json({
+            error: "Failed to create equipment",
+            details: error.message || "Unknown error"
+        }, { status: 500 });
     }
 }
