@@ -168,10 +168,13 @@ export default function EquipmentDetailPage({ params }: { params: Promise<{ id: 
                     // Show success feedback
                 }
             } else {
-                console.error("Failed to save");
+                const errorText = await res.text();
+                console.error(`Failed to save. Status: ${res.status}. Response: ${errorText}`);
+                alert(`Failed to save: ${res.status} ${res.statusText}`);
             }
         } catch (error) {
             console.error("Error saving", error);
+            alert("An unexpected error occurred while saving.");
         } finally {
             setSaving(false);
         }
@@ -235,15 +238,21 @@ export default function EquipmentDetailPage({ params }: { params: Promise<{ id: 
                                     backgroundImage: `url("${formData.imageUrl || 'https://lh3.googleusercontent.com/aida-public/AB6AXuCgLXcDY4ZjP55LKJrTcEKJPDuFFlPkdfJnAlECaXAqSp6e4Du1wwCCsN9pvGKBcWpYMHWacve7vs_MQwIalif_aBG-mA5WTd9rAFHdgqQnVb-_NUciO_WLPQXw7ygzJ7wZP4KLdxHUIfIaWOddGTe5fr5BnInZ6fRkcLZe7gOeBe8bCNiEpPJx0EOK123OVfPFqVFHzFn0KXrNpRGnMI2i1Z7Uuv-OTQE1MTclupPRcd_Hf3udqqNAun6yePhQXCwhDO8neJixbUYd'}")`
                                 }}
                             ></div>
-                            <label className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                                <span className="material-symbols-outlined mr-2">upload_file</span> Change
-                                <input
-                                    type="file"
-                                    className="hidden"
-                                    onChange={handleImageUpload}
-                                    accept="image/*"
-                                />
-                            </label>
+                            {isNew ? (
+                                <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center text-white p-2 text-center text-xs">
+                                    Save first to upload
+                                </div>
+                            ) : (
+                                <label className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                                    <span className="material-symbols-outlined mr-2">upload_file</span> Change
+                                    <input
+                                        type="file"
+                                        className="hidden"
+                                        onChange={handleImageUpload}
+                                        accept="image/*"
+                                    />
+                                </label>
+                            )}
                         </div>
                         <h2 className="text-lg font-bold text-gray-900 dark:text-white">{formData.name}</h2>
 
@@ -342,20 +351,28 @@ export default function EquipmentDetailPage({ params }: { params: Promise<{ id: 
                                     </div>
 
                                     {/* Upload Area */}
-                                    <div className="flex flex-col items-center justify-center w-full p-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl text-center bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                                        <span className="material-symbols-outlined text-5xl text-gray-400">cloud_upload</span>
-                                        <p className="mt-2 font-semibold text-gray-900 dark:text-white">Upload Documents</p>
-                                        <label className="mt-2 cursor-pointer">
-                                            <span className="text-sm font-bold text-primary hover:underline">Browse files</span>
-                                            <input
-                                                type="file"
-                                                className="hidden"
-                                                onChange={handleFileUpload}
-                                                accept=".pdf,.docx,.txt"
-                                            />
-                                        </label>
-                                        <p className="text-xs text-gray-400 mt-4">Supported file types: PDF, DOCX, TXT</p>
-                                    </div>
+                                    {isNew ? (
+                                        <div className="flex flex-col items-center justify-center w-full p-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl text-center bg-gray-50 dark:bg-gray-800/50 opacity-60 cursor-not-allowed">
+                                            <span className="material-symbols-outlined text-5xl text-gray-400">cloud_off</span>
+                                            <p className="mt-2 font-semibold text-gray-900 dark:text-white">Upload Disabled</p>
+                                            <p className="text-sm text-gray-500 font-bold mt-1">Please save the equipment details first.</p>
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col items-center justify-center w-full p-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl text-center bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                                            <span className="material-symbols-outlined text-5xl text-gray-400">cloud_upload</span>
+                                            <p className="mt-2 font-semibold text-gray-900 dark:text-white">Upload Documents</p>
+                                            <label className="mt-2 cursor-pointer">
+                                                <span className="text-sm font-bold text-primary hover:underline">Browse files</span>
+                                                <input
+                                                    type="file"
+                                                    className="hidden"
+                                                    onChange={handleFileUpload}
+                                                    accept=".pdf,.docx,.txt"
+                                                />
+                                            </label>
+                                            <p className="text-xs text-gray-400 mt-4">Supported file types: PDF, DOCX, TXT</p>
+                                        </div>
+                                    )}
 
                                     {/* File List */}
                                     <div className="space-y-3">

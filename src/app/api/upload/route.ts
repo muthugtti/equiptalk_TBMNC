@@ -16,6 +16,10 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "No equipment ID provided" }, { status: 400 });
         }
 
+        if (equipmentId === "new") {
+            return NextResponse.json({ error: "Cannot upload files for unsaved equipment. Please save first." }, { status: 400 });
+        }
+
         const buffer = Buffer.from(await file.arrayBuffer());
         const filename = `${equipmentId}/${uuidv4()}-${file.name}`;
         const fileUpload = bucket.file(filename);
@@ -36,8 +40,11 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({ url: publicUrl, filename }, { status: 201 });
 
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error uploading file:", error);
-        return NextResponse.json({ error: "Upload failed" }, { status: 500 });
+        return NextResponse.json({
+            error: "Upload failed",
+            details: error.message || "Unknown error"
+        }, { status: 500 });
     }
 }
