@@ -32,6 +32,8 @@ steps:
   # 4. Deploy to Firebase Hosting (which handles Cloud Run / Functions backend)
   - name: 'gcr.io/$PROJECT_ID/firebase'
     args: ['deploy', '--project', '$PROJECT_ID', '--only', 'hosting']
+    env:
+      - 'FIREBASE_CLI_EXPERIMENTS=webframeworks'
 
 availableSecrets:
   secretManager:

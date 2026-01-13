@@ -23,3 +23,5 @@ jobs:
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_EQUIPTALK_317D8 }}'
           channelId: live
           projectId: equiptalk-317d8
+        env:
+          FIREBASE_CLI_EXPERIMENTS: webframeworks
