@@ -1,57 +1,107 @@
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/db";
+import { db } from "@/lib/firestore";
 
-export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(
+    req: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+) {
     try {
         const { id } = await params;
-        const equipment = await prisma.equipment.findUnique({
-            where: { id },
-            include: {
-                documents: true
-            }
-        });
+        const docRef = db.collection('equipment').doc(id);
+        const doc = await docRef.get();
 
-        if (!equipment) {
+        if (!doc.exists) {
             return NextResponse.json({ error: "Equipment not found" }, { status: 404 });
         }
 
-        return NextResponse.json(equipment);
-    } catch (error) {
+        // Get documents for this equipment
+        const documentsSnapshot = await db.collection('documents')
+            .where('equipmentId', '==', id)
+            .get();
+
+        const documents = documentsSnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+
+        return NextResponse.json({
+            id: doc.id,
+            ...doc.data(),
+            documents
+        });
+    } catch (error: any) {
         console.error("Error fetching equipment:", error);
-        return NextResponse.json({ error: "Failed to fetch equipment" }, { status: 500 });
+        return NextResponse.json({
+            error: "Failed to fetch equipment",
+            details: error.message
+        }, { status: 500 });
     }
 }
 
-export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function PUT(
+    req: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+) {
     try {
         const { id } = await params;
         const body = await req.json();
 
-        // Exclude fields that shouldn't be updated or don't exist in Prisma model flatly
-        const { id: _, documents, createdAt, updatedAt, ...updateData } = body;
+        const docRef = db.collection('equipment').doc(id);
+        const doc = await docRef.get();
 
-        const updatedEquipment = await prisma.equipment.update({
-            where: { id },
-            data: updateData
+        if (!doc.exists) {
+            return NextResponse.json({ error: "Equipment not found" }, { status: 404 });
+        }
+
+        const updateData = {
+            ...body,
+            updatedAt: new Date().toISOString()
+        };
+
+        await docRef.update(updateData);
+
+        return NextResponse.json({
+            id,
+            ...doc.data(),
+            ...updateData
         });
-
-        return NextResponse.json(updatedEquipment);
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error updating equipment:", error);
-        return NextResponse.json({ error: "Failed to update equipment" }, { status: 500 });
+        return NextResponse.json({
+            error: "Failed to update equipment",
+            details: error.message
+        }, { status: 500 });
     }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(
+    req: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+) {
     try {
         const { id } = await params;
-        await prisma.equipment.delete({
-            where: { id }
+
+        // Delete all documents associated with this equipment
+        const documentsSnapshot = await db.collection('documents')
+            .where('equipmentId', '==', id)
+            .get();
+
+        const batch = db.batch();
+        documentsSnapshot.docs.forEach(doc => {
+            batch.delete(doc.ref);
         });
 
+        // Delete the equipment
+        batch.delete(db.collection('equipment').doc(id));
+
+        await batch.commit();
+
         return NextResponse.json({ success: true });
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error deleting equipment:", error);
-        return NextResponse.json({ error: "Failed to delete equipment" }, { status: 500 });
+        return NextResponse.json({
+            error: "Failed to delete equipment",
+            details: error.message
+        }, { status: 500 });
     }
 }

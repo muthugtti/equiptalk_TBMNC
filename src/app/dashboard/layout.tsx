@@ -75,12 +75,6 @@ export default function DashboardLayout({
                             Equipment
                         </Link>
                         <Link
-                            href="#"
-                            className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary"
-                        >
-                            Agents
-                        </Link>
-                        <Link
                             href="/dashboard/incidents"
                             className={`text-sm font-medium ${isActive('/dashboard/incidents') ? 'text-primary' : 'text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary'}`}
                         >

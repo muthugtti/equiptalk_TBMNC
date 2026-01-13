@@ -1,19 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/db";
-import { v4 as uuidv4 } from 'uuid';
+import { db } from "@/lib/firestore";
 
 export async function GET(req: NextRequest) {
     try {
-        const equipment = await prisma.equipment.findMany({
-            orderBy: {
-                updatedAt: 'desc'
-            }
-        });
+        const equipmentRef = db.collection('equipment');
+        const snapshot = await equipmentRef.orderBy('updatedAt', 'desc').get();
+
+        const equipment = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
 
         return NextResponse.json({ equipment });
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error fetching equipment:", error);
-        return NextResponse.json({ error: "Failed to fetch equipment" }, { status: 500 });
+        return NextResponse.json({
+            error: "Failed to fetch equipment",
+            details: error.message
+        }, { status: 500 });
     }
 }
 
@@ -32,31 +36,38 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
         }
 
-        // Slug generation
+        // Generate slug
         let slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
 
-        // Ensure unique slug
-        const existing = await prisma.equipment.findUnique({
-            where: { slug }
-        });
+        // Check for existing slug
+        const existingSnapshot = await db.collection('equipment')
+            .where('slug', '==', slug)
+            .limit(1)
+            .get();
 
-        if (existing) {
-            slug = `${slug}-${uuidv4().slice(0, 4)}`;
+        if (!existingSnapshot.empty) {
+            // Add random suffix if slug exists
+            slug = `${slug}-${Math.random().toString(36).substring(2, 6)}`;
         }
 
-        const newEquipment = await prisma.equipment.create({
-            data: {
-                name,
-                type,
-                model: model || "",
-                serialNumber: serialNumber || "",
-                status: status || "OPERATIONAL",
-                organizationId,
-                slug,
-            }
-        });
+        const equipmentData = {
+            name,
+            type,
+            model: model || "",
+            serialNumber: serialNumber || "",
+            status: status || "OPERATIONAL",
+            organizationId,
+            slug,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
 
-        return NextResponse.json(newEquipment, { status: 201 });
+        const docRef = await db.collection('equipment').add(equipmentData);
+
+        return NextResponse.json({
+            id: docRef.id,
+            ...equipmentData
+        }, { status: 201 });
     } catch (error: any) {
         console.error("Error creating equipment:", error);
         return NextResponse.json({
