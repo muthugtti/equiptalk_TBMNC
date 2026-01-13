@@ -13,7 +13,14 @@ Since you are using **Prisma (PostgreSQL)** and **Next.js SSR**, we need to set 
 
 ## 2. Infrastructure Setup (One-time)
 
-### A. Enable APIs
+### A. Identify Service Account
+If you set up GitHub Actions via `firebase init`, a service account was created for you.
+To find it:
+1.  Go to [GCP Console > IAM & Admin > Service Accounts](https://console.cloud.google.com/iam-admin/serviceaccounts?project=equiptalk-317d8).
+2.  Look for an account named like `github-action-xxxx` or `firebase-adminsdk-xxxx`.
+3.  Note its email address (e.g., `github-action-12345@equiptalk-317d8.iam.gserviceaccount.com`).
+
+### B. Enable APIs
 Enable the necessary Google Cloud APIs for your project:
 ```bash
 # Replace YOUR_PROJECT_ID with your actual Firebase project ID
