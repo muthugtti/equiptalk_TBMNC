@@ -18,6 +18,11 @@ export default function LoginPage() {
         setLoading(true);
         setError(null);
 
+        // DEBUG: Check if we are using the real key or mock key
+        console.log("Debug - Firebase Config Check:");
+        console.log("API Key loaded?", process.env.NEXT_PUBLIC_FIREBASE_API_KEY ? "Yes (Length: " + process.env.NEXT_PUBLIC_FIREBASE_API_KEY.length + ")" : "No");
+        console.log("Is Mock Key?", process.env.NEXT_PUBLIC_FIREBASE_API_KEY === "mock-key" ? "YES - ENV VARS MISSING" : "No");
+
         try {
             await signInWithEmailAndPassword(auth, email, password);
             router.push("/dashboard");
