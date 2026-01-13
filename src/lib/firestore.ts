@@ -1,11 +1,10 @@
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
+import * as admin from 'firebase-admin';
 
 // Initialize Firebase Admin if not already initialized
-if (!getApps().length) {
-    initializeApp({
+if (!admin.apps.length) {
+    admin.initializeApp({
         projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
     });
 }
 
-export const db = getFirestore();
+export const db = admin.firestore();
