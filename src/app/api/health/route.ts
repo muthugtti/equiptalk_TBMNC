@@ -1,35 +1,24 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/db";
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
     try {
+        console.log("Health check called");
+
+        // Check env vars without crashing
         const dbUrl = process.env.DATABASE_URL;
         const isConfigured = !!dbUrl;
 
-        // Try to connect
-        let connectionStatus = "UNKNOWN";
-        let errorDetails = null;
-
-        try {
-            await prisma.$queryRaw`SELECT 1`;
-            connectionStatus = "OK";
-        } catch (e: any) {
-            connectionStatus = "FAILED";
-            errorDetails = e.message;
-        }
-
         return NextResponse.json({
             status: "online",
+            mode: "safe_mode",
             env: {
                 databaseUrlConfigured: isConfigured,
+                databaseUrlLength: dbUrl ? dbUrl.length : 0,
                 nodeEnv: process.env.NODE_ENV,
             },
-            database: {
-                status: connectionStatus,
-                error: errorDetails
-            }
+            message: "Database check skipped to prevent crash."
         });
     } catch (error) {
         return NextResponse.json({
