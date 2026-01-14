@@ -370,6 +370,15 @@ export default function EquipmentDetailPage({ params }: { params: Promise<{ id: 
                                 />
                             </div>
                             <div className="space-y-1 mb-2">
+                                <label className="text-xs font-bold text-gray-500 uppercase">Equipment ID</label>
+                                <input
+                                    type="text"
+                                    value={formData.model}
+                                    onChange={(e) => setFormData({ ...formData, model: e.target.value })}
+                                    className="w-full text-sm rounded-md border-gray-300 dark:border-gray-600 bg-transparent dark:text-white"
+                                />
+                            </div>
+                            <div className="space-y-1 mb-2">
                                 <label className="text-xs font-bold text-gray-500 uppercase">Status</label>
                                 <select
                                     value={formData.status}

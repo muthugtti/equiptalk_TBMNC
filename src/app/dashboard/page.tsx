@@ -125,7 +125,7 @@ export default function DashboardPage() {
             <div className="mx-auto max-w-7xl">
                 <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
                     <h1 className="text-3xl font-black text-gray-900 dark:text-white tracking-[-0.033em]">
-                        LLM Agent Performance Dashboard
+                        Performance Dashboard
                     </h1>
                     <div className="flex flex-wrap gap-2">
                         <button className="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 pl-4 pr-3 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">

@@ -1,11 +1,127 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import ReportIncidentModal from "@/components/dashboard/incidents/ReportIncidentModal";
+
+interface Incident {
+    id: string;
+    displayId?: string;
+    equipmentId: string;
+    equipmentName: string;
+    issueDescription: string;
+    status: string;
+    priority: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+interface Equipment {
+    id: string;
+    name: string;
+    model: string;
+}
 
 export default function IncidentsPage() {
+    const [incidents, setIncidents] = useState<Incident[]>([]);
+    const [equipmentList, setEquipmentList] = useState<Equipment[]>([]);
+    const [loading, setLoading] = useState(true);
     const [filterStatus, setFilterStatus] = useState("");
     const [filterPriority, setFilterPriority] = useState("");
+
+    // Modal State
     const [showReportModal, setShowReportModal] = useState(false);
+    const [editingIncident, setEditingIncident] = useState<Incident | undefined>(undefined);
+
+    useEffect(() => {
+        fetchData();
+    }, []);
+
+    const fetchData = async () => {
+        setLoading(true);
+        try {
+            const [incidentsRes, equipmentRes] = await Promise.all([
+                fetch("/api/incidents"),
+                fetch("/api/equipment")
+            ]);
+
+            const incidentsData = await incidentsRes.json();
+            const equipmentData = await equipmentRes.json();
+
+            if (incidentsData.incidents) {
+                setIncidents(incidentsData.incidents);
+            }
+            if (equipmentData.equipment) {
+                setEquipmentList(equipmentData.equipment);
+            }
+        } catch (error) {
+            console.error("Failed to fetch data:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleCreateClick = () => {
+        setEditingIncident(undefined);
+        setShowReportModal(true);
+    };
+
+    const handleEditClick = (incident: Incident) => {
+        setEditingIncident(incident);
+        setShowReportModal(true);
+    };
+
+    const handleDeleteClick = async (id: string) => {
+        if (!confirm("Are you sure you want to delete this incident?")) return;
+
+        try {
+            const res = await fetch(`/api/incidents/${id}`, {
+                method: "DELETE"
+            });
+            if (res.ok) {
+                setIncidents(prev => prev.filter(inc => inc.id !== id));
+            } else {
+                alert("Failed to delete incident");
+            }
+        } catch (error) {
+            console.error("Error deleting incident:", error);
+        }
+    };
+
+    const filteredIncidents = incidents.filter(incident => {
+        if (filterStatus && incident.status !== filterStatus) return false;
+        if (filterPriority && incident.priority !== filterPriority) return false;
+        return true;
+    });
+
+    const getStatusColor = (status: string) => {
+        switch (status) {
+            case "open": return "bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400";
+            case "in_progress": return "bg-yellow-100 text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400";
+            case "resolved": return "bg-green-100 text-green-700 dark:bg-green-500/10 dark:text-green-400";
+            case "closed": return "bg-gray-100 text-gray-700 dark:bg-gray-500/10 dark:text-gray-400";
+            default: return "bg-gray-100 text-gray-700 dark:bg-gray-500/10 dark:text-gray-400";
+        }
+    };
+
+    const getPriorityColor = (priority: string) => {
+        switch (priority) {
+            case "critical": return "text-red-600 dark:text-red-400";
+            case "high": return "text-orange-600 dark:text-orange-400";
+            case "medium": return "text-yellow-600 dark:text-yellow-400";
+            case "low": return "text-blue-600 dark:text-blue-400";
+            default: return "text-gray-600 dark:text-gray-400";
+        }
+    };
+
+    const getPriorityIcon = (priority: string) => {
+        switch (priority) {
+            case "critical": return "priority_high";
+            case "high": return "arrow_upward";
+            case "medium": return "remove";
+            case "low": return "arrow_downward";
+            default: return "remove";
+        }
+    };
 
     return (
         <main className="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -18,7 +134,7 @@ export default function IncidentsPage() {
             <div className="flex flex-wrap justify-between gap-3 mb-8">
                 <h1 className="text-3xl font-black tracking-tighter min-w-72 text-gray-900 dark:text-white">Incidents</h1>
                 <button
-                    onClick={() => setShowReportModal(true)}
+                    onClick={handleCreateClick}
                     className="flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white hover:bg-primary/90 transition-colors shadow-sm"
                 >
                     <span className="material-symbols-outlined text-xl">add</span>
@@ -89,96 +205,84 @@ export default function IncidentsPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                            {/* Row 1 */}
-                            <tr className="hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors">
-                                <td className="px-6 py-4 font-mono text-xs text-gray-500 dark:text-gray-400">#INC-2024-001</td>
-                                <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">SpectraMax M5</td>
-                                <td className="px-6 py-4 text-gray-500 dark:text-gray-400 max-w-xs truncate">Optical sensor calibration failed during routine check.</td>
-                                <td className="px-6 py-4">
-                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
-                                        Open
-                                    </span>
-                                </td>
-                                <td className="px-6 py-4">
-                                    <span className="inline-flex items-center gap-1 text-red-600 dark:text-red-400 font-medium">
-                                        <span className="material-symbols-outlined text-lg">priority_high</span>
-                                        Critical
-                                    </span>
-                                </td>
-                                <td className="px-6 py-4 text-gray-500 dark:text-gray-400">Oct 24, 2023 09:42 AM</td>
-                                <td className="px-6 py-4 text-right">
-                                    <button className="text-gray-500 dark:text-gray-400 hover:text-primary transition-colors">
-                                        <span className="material-symbols-outlined">more_vert</span>
-                                    </button>
-                                </td>
-                            </tr>
-                            {/* Row 2 */}
-                            <tr className="hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors">
-                                <td className="px-6 py-4 font-mono text-xs text-gray-500 dark:text-gray-400">#INC-2024-002</td>
-                                <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">Centrifuge 5424 R</td>
-                                <td className="px-6 py-4 text-gray-500 dark:text-gray-400 max-w-xs truncate">Unusual noise detected at high RPM speeds.</td>
-                                <td className="px-6 py-4">
-                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-400">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-yellow-500"></span>
-                                        In Progress
-                                    </span>
-                                </td>
-                                <td className="px-6 py-4">
-                                    <span className="inline-flex items-center gap-1 text-orange-600 dark:text-orange-400 font-medium">
-                                        <span className="material-symbols-outlined text-lg">arrow_upward</span>
-                                        High
-                                    </span>
-                                </td>
-                                <td className="px-6 py-4 text-gray-500 dark:text-gray-400">Oct 23, 2023 02:15 PM</td>
-                                <td className="px-6 py-4 text-right">
-                                    <button className="text-gray-500 dark:text-gray-400 hover:text-primary transition-colors">
-                                        <span className="material-symbols-outlined">more_vert</span>
-                                    </button>
-                                </td>
-                            </tr>
+                            {loading ? (
+                                <tr>
+                                    <td colSpan={7} className="px-6 py-10 text-center text-gray-500">
+                                        Loading incidents...
+                                    </td>
+                                </tr>
+                            ) : filteredIncidents.length === 0 ? (
+                                <tr>
+                                    <td colSpan={7} className="px-6 py-10 text-center text-gray-500">
+                                        No incidents found.
+                                    </td>
+                                </tr>
+                            ) : (
+                                filteredIncidents.map(incident => (
+                                    <tr key={incident.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors">
+                                        <td className="px-6 py-4 font-mono text-xs text-gray-500 dark:text-gray-400">
+                                            {incident.displayId || incident.id.substring(0, 8)}
+                                        </td>
+                                        <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">
+                                            {incident.equipmentName}
+                                        </td>
+                                        <td className="px-6 py-4 text-gray-500 dark:text-gray-400 max-w-xs truncate" title={incident.issueDescription}>
+                                            {incident.issueDescription}
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(incident.status)}`}>
+                                                <span className={`w-1.5 h-1.5 rounded-full ${incident.status === 'open' ? 'bg-red-500' : incident.status === 'in_progress' ? 'bg-yellow-500' : 'bg-green-500'}`}></span>
+                                                {incident.status.replace('_', ' ')}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <span className={`inline-flex items-center gap-1 font-medium ${getPriorityColor(incident.priority)}`}>
+                                                <span className="material-symbols-outlined text-lg">{getPriorityIcon(incident.priority)}</span>
+                                                {incident.priority.charAt(0).toUpperCase() + incident.priority.slice(1)}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-gray-500 dark:text-gray-400">
+                                            {new Date(incident.createdAt).toLocaleDateString()} {new Date(incident.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <div className="flex justify-end gap-2">
+                                                <button
+                                                    onClick={() => handleEditClick(incident)}
+                                                    className="text-gray-500 dark:text-gray-400 hover:text-primary transition-colors"
+                                                    title="Edit"
+                                                >
+                                                    <span className="material-symbols-outlined">edit</span>
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteClick(incident.id)}
+                                                    className="text-gray-500 dark:text-gray-400 hover:text-red-600 transition-colors"
+                                                    title="Delete"
+                                                >
+                                                    <span className="material-symbols-outlined">delete</span>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
                         </tbody>
                     </table>
                 </div>
 
                 <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
                     <div className="text-sm text-gray-500 dark:text-gray-400">
-                        Showing <span className="font-medium text-gray-900 dark:text-white">1</span> to <span className="font-medium text-gray-900 dark:text-white">5</span> of <span className="font-medium text-gray-900 dark:text-white">12</span> results
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <button className="p-2 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                            <span className="material-symbols-outlined text-lg">chevron_left</span>
-                        </button>
-                        <button className="p-2 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-primary">
-                            <span className="material-symbols-outlined text-lg">chevron_right</span>
-                        </button>
+                        Showing <span className="font-medium text-gray-900 dark:text-white">{filteredIncidents.length}</span> results
                     </div>
                 </div>
             </div>
 
-            {/* Simple Modal Placeholder */}
-            {showReportModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-lg p-6">
-                        <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">Report New Incident</h2>
-                        <p className="text-gray-600 dark:text-gray-300 mb-6">Form to report a new incident will go here.</p>
-                        <div className="flex justify-end gap-3">
-                            <button
-                                onClick={() => setShowReportModal(false)}
-                                className="px-4 py-2 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 font-medium"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={() => setShowReportModal(false)}
-                                className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 font-bold"
-                            >
-                                Submit Report
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <ReportIncidentModal
+                isOpen={showReportModal}
+                onClose={() => setShowReportModal(false)}
+                onSuccess={fetchData}
+                equipmentList={equipmentList}
+                initialData={editingIncident}
+            />
         </main>
     );
 }
