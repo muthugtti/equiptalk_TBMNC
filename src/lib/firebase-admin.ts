@@ -1,4 +1,3 @@
-
 import "server-only";
 import * as admin from 'firebase-admin';
 import { getFirestore } from 'firebase-admin/firestore';
@@ -21,11 +20,18 @@ export async function initAdmin() {
             process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ||
             process.env.FIREBASE_PROJECT_ID;
 
+        // Log project ID attempt (sanitized for safety)
+        console.log(`[Firebase Admin] Attempting to init. Project ID present: ${!!projectId}, ID: ${projectId}`);
+
         if (!projectId) {
+            console.error('[Firebase Admin] Missing Project ID env var');
             throw new Error('Firebase project ID not found in environment variables');
         }
 
         console.log(`[Firebase Admin] Initializing with project: ${projectId}`);
+
+        // Log credential strategy
+        console.log(`[Firebase Admin] Using applicationDefault credentials`);
 
         const app = admin.initializeApp({
             credential: admin.credential.applicationDefault(),
@@ -68,6 +74,11 @@ export const getStorageBucket = async () => {
     }
 
     await initAdmin();
-    storageInstance = getStorage().bucket();
+    const bucketName = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
+    if (!bucketName) {
+        throw new Error("NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET is not set");
+    }
+    console.log(`[Firebase Admin] Using storage bucket: ${bucketName}`);
+    storageInstance = getStorage().bucket(bucketName);
     return storageInstance;
 }

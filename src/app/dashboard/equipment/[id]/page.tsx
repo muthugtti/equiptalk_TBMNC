@@ -104,6 +104,7 @@ export default function EquipmentDetailPage({ params }: { params: Promise<{ id: 
 
             if (!uploadRes.ok) {
                 const error = await uploadRes.json();
+                console.error("❌ Upload API Error:", error);
                 throw new Error(error.error || "Upload failed");
             }
             const uploadData = await uploadRes.json();
@@ -141,6 +142,7 @@ export default function EquipmentDetailPage({ params }: { params: Promise<{ id: 
 
             if (!uploadRes.ok) {
                 const error = await uploadRes.json();
+                console.error("❌ Upload API Error:", error);
                 throw new Error(error.error || "Upload failed");
             }
             const uploadData = await uploadRes.json();
@@ -203,19 +205,85 @@ export default function EquipmentDetailPage({ params }: { params: Promise<{ id: 
         }
     };
 
-    const handleDelete = async () => {
-        if (!confirm("Are you sure you want to delete this equipment? This action cannot be undone.")) return;
-        setSaving(true);
+    // Delete Modal State
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [deleteConfirmationText, setDeleteConfirmationText] = useState("");
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    const handleDeleteClick = () => {
+        setIsDeleteModalOpen(true);
+        setDeleteConfirmationText("");
+    };
+
+    const confirmDelete = async () => {
+        if (deleteConfirmationText !== "DELETE") return;
+
+        setIsDeleting(true);
         try {
             const res = await fetch(`/api/equipment/${id}`, { method: "DELETE" });
             if (res.ok) {
                 router.push("/dashboard/equipment");
+            } else {
+                const error = await res.json();
+                alert(`Failed to delete: ${error.details || error.error}`);
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error deleting", error);
-            setSaving(false);
+            alert(`Error deleting: ${error.message}`);
+        } finally {
+            setIsDeleting(false);
+            setIsDeleteModalOpen(false);
         }
     };
+
+    // --- RENDER HELPERS ---
+
+    const DeleteModal = () => (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full p-6 border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center gap-3 mb-4 text-red-600 dark:text-red-400">
+                    <span className="material-symbols-outlined text-3xl">warning</span>
+                    <h3 className="text-xl font-bold">Delete Equipment?</h3>
+                </div>
+
+                <p className="text-gray-600 dark:text-gray-300 mb-4">
+                    This action is <span className="font-bold">irreversible</span>.
+                    It will permanently delete <strong>{formData.name}</strong> and all associated documents and images.
+                </p>
+
+                <div className="mb-6">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Type <strong>DELETE</strong> to confirm:
+                    </label>
+                    <input
+                        type="text"
+                        value={deleteConfirmationText}
+                        onChange={(e) => setDeleteConfirmationText(e.target.value)}
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                        placeholder="DELETE"
+                    />
+                </div>
+
+                <div className="flex items-center justify-end gap-3">
+                    <button
+                        onClick={() => setIsDeleteModalOpen(false)}
+                        className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium"
+                        disabled={isDeleting}
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={confirmDelete}
+                        disabled={deleteConfirmationText !== "DELETE" || isDeleting}
+                        className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-bold"
+                    >
+                        {isDeleting && <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>}
+                        {isDeleting ? "Deleting..." : "Delete Forever"}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
 
     if (loading) {
         return (
@@ -324,7 +392,7 @@ export default function EquipmentDetailPage({ params }: { params: Promise<{ id: 
 
                             {!isNew && (
                                 <button
-                                    onClick={handleDelete}
+                                    onClick={handleDeleteClick}
                                     className="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-red-500/10 dark:bg-red-500/20 text-red-600 dark:text-red-400 text-sm font-bold tracking-wide hover:bg-red-500/20 dark:hover:bg-red-500/30"
                                 >
                                     Delete Equipment
@@ -613,6 +681,7 @@ export default function EquipmentDetailPage({ params }: { params: Promise<{ id: 
                     </div>
                 </div>
             </div>
+            {isDeleteModalOpen && <DeleteModal />}
         </main>
     );
 }

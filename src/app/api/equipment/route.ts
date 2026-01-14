@@ -22,9 +22,32 @@ export async function GET(req: NextRequest) {
     }
 }
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: NextRequest) {
+    console.log("Starting equipment creation POST request");
+
+    // Log environment state (safe values only)
+    console.log("Environment check:", {
+        nodeEnv: process.env.NODE_ENV,
+        hasProjectId: !!(process.env.GOOGLE_CLOUD_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID),
+        hasStorageBucket: !!process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+    });
+
     try {
-        const db = await getDb();
+        let db;
+        try {
+            console.log("Attempting to get DB instance...");
+            db = await getDb();
+            console.log("DB instance retrieved successfully");
+        } catch (dbError: any) {
+            console.error("Failed to get DB instance:", dbError);
+            return NextResponse.json({
+                error: "Database connection failed",
+                details: dbError.message
+            }, { status: 500 });
+        }
+
         let body;
         try {
             body = await req.json();

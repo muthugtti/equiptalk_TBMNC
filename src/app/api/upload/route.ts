@@ -59,7 +59,6 @@ export async function POST(req: NextRequest) {
         });
 
         // Construct the standard Firebase Storage URL
-        // Format: https://firebasestorage.googleapis.com/v0/b/<bucket>/o/<path>?alt=media&token=<token>
         const encodedPath = encodeURIComponent(filename);
         const publicUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodedPath}?alt=media&token=${downloadToken}`;
 
@@ -73,8 +72,8 @@ export async function POST(req: NextRequest) {
     } catch (error: any) {
         console.error("Error uploading file:", error);
         return NextResponse.json({
-            error: "Upload failed",
-            details: error.message || "Unknown error"
+            error: `Upload failed: ${error.message}`,
+            details: error.stack
         }, { status: 500 });
     }
 }

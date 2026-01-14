@@ -24,6 +24,7 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
       </head>
       <body
+        suppressHydrationWarning
         className={`${inter.variable} font-sans antialiased bg-background-light dark:bg-background-dark text-gray-900 dark:text-gray-100`}
       >
         {children}

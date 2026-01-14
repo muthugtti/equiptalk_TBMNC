@@ -51,6 +51,16 @@ export default function DashboardLayout({
         );
     }
 
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    if (!mounted) {
+        return null;
+    }
+
     return (
         <div className="relative flex h-auto min-h-screen w-full flex-col">
             <div className="layout-container flex h-full grow flex-col">

@@ -84,18 +84,70 @@ export async function DELETE(
         const db = await getDb();
         const { id } = await params;
 
-        // Delete all documents associated with this equipment
+        // 1. Get Equipment Data (for Image URL)
+        const docRef = db.collection('equipment').doc(id);
+        const docSnap = await docRef.get();
+
+        if (!docSnap.exists) {
+            return NextResponse.json({ error: "Equipment not found" }, { status: 404 });
+        }
+        const equipmentData = docSnap.data();
+
+        // 2. Get Associated Documents
         const documentsSnapshot = await db.collection('documents')
             .where('equipmentId', '==', id)
             .get();
 
+        // 3. Initialize Storage
+        // Import dynamically to avoid circular dependecy issues if any, though standard import is fine usually.
+        const { getStorageBucket } = await import("@/lib/firebase-admin");
+        const bucket = await getStorageBucket();
+
+        // 4. Delete Document Files from Storage
+        const fileDeletePromises: Promise<any>[] = [];
+
+        documentsSnapshot.docs.forEach(doc => {
+            const data = doc.data();
+            if (data.filename) {
+                console.log(`[Delete] Scheduling deletion for document file: ${data.filename}`);
+                fileDeletePromises.push(
+                    bucket.file(data.filename).delete().catch(e =>
+                        console.warn(`Failed to delete document file ${data.filename}:`, e.message)
+                    )
+                );
+            }
+        });
+
+        // 5. Delete Main Image from Storage
+        if (equipmentData?.imageUrl && equipmentData.imageUrl.includes("firebasestorage.googleapis.com")) {
+            try {
+                // Extract path from URL: .../o/equipment%2F[id]%2Ffile.jpg?alt=...
+                const url = new URL(equipmentData.imageUrl);
+                const pathStart = url.pathname.indexOf('/o/');
+                if (pathStart !== -1) {
+                    const encodedPath = url.pathname.substring(pathStart + 3);
+                    const filePath = decodeURIComponent(encodedPath);
+                    console.log(`[Delete] Scheduling deletion for image file: ${filePath}`);
+                    fileDeletePromises.push(
+                        bucket.file(filePath).delete().catch(e =>
+                            console.warn(`Failed to delete image file ${filePath}:`, e.message)
+                        )
+                    );
+                }
+            } catch (e) {
+                console.warn("Failed to parse image URL for deletion:", e);
+            }
+        }
+
+        // Wait for all file deletions (don't block DB delete on failure, just log)
+        await Promise.allSettled(fileDeletePromises);
+
+        // 6. Delete Database Records (Batch)
         const batch = db.batch();
         documentsSnapshot.docs.forEach(doc => {
             batch.delete(doc.ref);
         });
-
-        // Delete the equipment
-        batch.delete(db.collection('equipment').doc(id));
+        batch.delete(docRef);
 
         await batch.commit();
 
