@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/firestore";
+import { getDb } from "@/lib/firebase-admin";
 
 export async function GET(req: NextRequest) {
     try {
+        const db = await getDb();
         const { searchParams } = new URL(req.url);
         const equipmentId = searchParams.get('equipmentId');
 
@@ -31,8 +32,9 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
     try {
+        const db = await getDb();
         const body = await req.json();
-        const { name, url, type, equipmentId } = body;
+        const { name, url, filename, type, equipmentId } = body;
 
         if (!name || !url || !equipmentId) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -41,6 +43,7 @@ export async function POST(req: NextRequest) {
         const documentData = {
             name,
             url,
+            filename: filename || "", // Optional to support legacy manual entries
             type: type || "document",
             equipmentId,
             createdAt: new Date().toISOString()
@@ -63,6 +66,7 @@ export async function POST(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
     try {
+        const db = await getDb();
         const { searchParams } = new URL(req.url);
         const id = searchParams.get('id');
 
@@ -70,7 +74,32 @@ export async function DELETE(req: NextRequest) {
             return NextResponse.json({ error: "Missing document ID" }, { status: 400 });
         }
 
-        await db.collection('documents').doc(id).delete();
+        // Get document to find the file path (if stored) or try to construct it
+        const docRef = db.collection('documents').doc(id);
+        const docSnap = await docRef.get();
+
+        if (!docSnap.exists) {
+            return NextResponse.json({ error: "Document not found" }, { status: 404 });
+        }
+
+        const docData = docSnap.data();
+
+        // Delete from Storage if we have a filename reference
+        // (Note: The new upload API saves 'filename', legacy ones might not have it)
+        if (docData?.filename) {
+            try {
+                // Dynamic import to avoid circular dependencies if any, 
+                // but here we just need the bucket
+                const { getStorageBucket } = await import("@/lib/firebase-admin");
+                const bucket = await getStorageBucket();
+                await bucket.file(docData.filename).delete();
+            } catch (storageError) {
+                console.warn("Failed to delete file from storage (might rely on manual cleanup or file not found):", storageError);
+                // Proceed to delete metadata anyway
+            }
+        }
+
+        await docRef.delete();
 
         return NextResponse.json({ success: true });
     } catch (error: any) {

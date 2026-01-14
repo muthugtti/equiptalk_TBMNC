@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/firestore";
+import { getDb } from "@/lib/firebase-admin";
 
 export async function GET(
     req: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const db = await getDb();
         const { id } = await params;
         const docRef = db.collection('equipment').doc(id);
         const doc = await docRef.get();
@@ -43,6 +44,7 @@ export async function PUT(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const db = await getDb();
         const { id } = await params;
         const body = await req.json();
 
@@ -79,6 +81,7 @@ export async function DELETE(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const db = await getDb();
         const { id } = await params;
 
         // Delete all documents associated with this equipment

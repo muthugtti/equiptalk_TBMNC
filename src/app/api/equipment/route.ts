@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/firestore";
+import { getDb } from "@/lib/firebase-admin";
 
 export async function GET(req: NextRequest) {
     try {
+        const db = await getDb();
         const equipmentRef = db.collection('equipment');
         const snapshot = await equipmentRef.orderBy('updatedAt', 'desc').get();
 
@@ -23,6 +24,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
     try {
+        const db = await getDb();
         let body;
         try {
             body = await req.json();

@@ -84,6 +84,13 @@ export default function EquipmentDetailPage({ params }: { params: Promise<{ id: 
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files?.length) return;
         const file = e.target.files[0];
+
+        // Validation
+        if (file.size > 10 * 1024 * 1024) {
+            alert("Image size must be less than 10MB");
+            return;
+        }
+
         const uploadFormData = new FormData();
         uploadFormData.append("file", file);
         uploadFormData.append("equipmentId", id);
@@ -95,13 +102,16 @@ export default function EquipmentDetailPage({ params }: { params: Promise<{ id: 
                 body: uploadFormData
             });
 
-            if (!uploadRes.ok) throw new Error("Upload failed");
+            if (!uploadRes.ok) {
+                const error = await uploadRes.json();
+                throw new Error(error.error || "Upload failed");
+            }
             const uploadData = await uploadRes.json();
 
             setFormData(prev => ({ ...prev, imageUrl: uploadData.url }));
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error uploading image", error);
-            alert("Failed to upload image");
+            alert(`Failed to upload image: ${error.message}`);
         } finally {
             setSaving(false);
         }
@@ -110,6 +120,13 @@ export default function EquipmentDetailPage({ params }: { params: Promise<{ id: 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files?.length) return;
         const file = e.target.files[0];
+
+        // Validation
+        if (file.size > 10 * 1024 * 1024) {
+            alert("File size must be less than 10MB");
+            return;
+        }
+
         const uploadFormData = new FormData();
         uploadFormData.append("file", file);
         uploadFormData.append("equipmentId", id);
@@ -122,7 +139,10 @@ export default function EquipmentDetailPage({ params }: { params: Promise<{ id: 
                 body: uploadFormData
             });
 
-            if (!uploadRes.ok) throw new Error("Upload failed");
+            if (!uploadRes.ok) {
+                const error = await uploadRes.json();
+                throw new Error(error.error || "Upload failed");
+            }
             const uploadData = await uploadRes.json();
 
             // 2. Save Document Record
@@ -132,6 +152,7 @@ export default function EquipmentDetailPage({ params }: { params: Promise<{ id: 
                 body: JSON.stringify({
                     name: file.name,
                     url: uploadData.url,
+                    filename: uploadData.filename, // Store filename for deletion
                     type: "document",
                     equipmentId: id
                 })
@@ -139,10 +160,12 @@ export default function EquipmentDetailPage({ params }: { params: Promise<{ id: 
 
             if (docRes.ok) {
                 fetchEquipmentDetails(); // Refresh list
+            } else {
+                throw new Error("Failed to save document record");
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error uploading file", error);
-            alert("Failed to upload file");
+            alert(`Failed to upload file: ${error.message}`);
         } finally {
             setSaving(false);
         }
