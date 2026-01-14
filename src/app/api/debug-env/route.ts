@@ -5,7 +5,7 @@ import { getDb } from '@/lib/firebase-admin';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(req: Request) {
     try {
         const envVars = {
             NODE_ENV: process.env.NODE_ENV,
@@ -17,20 +17,27 @@ export async function GET() {
             FIREBASE_PROJECT_ID: process.env.FIREBASE_PROJECT_ID,
         };
 
-        let dbStatus = 'Not connected';
+        let dbStatus = 'Skipped (use ?connect=true to test)';
         let errorMsg = '';
         let apps = 0;
 
-        try {
-            const db = await getDb();
-            dbStatus = 'Connected';
-            apps = admin.apps.length;
-            // Try a simple read
-            await db.collection('test').limit(1).get();
-            dbStatus = 'Connected & Verified Read';
-        } catch (e: any) {
-            dbStatus = 'Connection Failed';
-            errorMsg = e.message;
+        const { searchParams } = new URL(req.url);
+        const shouldConnect = searchParams.get('connect') === 'true';
+
+        if (shouldConnect) {
+            try {
+                const db = await getDb();
+                dbStatus = 'Connected';
+                apps = admin.apps.length;
+                // Try a simple read
+                await db.collection('test').limit(1).get();
+                dbStatus = 'Connected & Verified Read';
+            } catch (e: any) {
+                dbStatus = 'Connection Failed';
+                errorMsg = e.message;
+            }
+        } else {
+            apps = admin.apps ? admin.apps.length : 0;
         }
 
         return NextResponse.json({
@@ -39,7 +46,8 @@ export async function GET() {
             firebase: {
                 appsCount: apps,
                 dbStatus,
-                error: errorMsg
+                error: errorMsg,
+                note: 'Add ?connect=true to URL to test actual DB connection'
             }
         });
     } catch (error: any) {
