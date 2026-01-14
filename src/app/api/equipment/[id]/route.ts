@@ -111,7 +111,7 @@ export async function DELETE(
             if (data.filename) {
                 console.log(`[Delete] Scheduling deletion for document file: ${data.filename}`);
                 fileDeletePromises.push(
-                    bucket.file(data.filename).delete().catch(e =>
+                    bucket.file(data.filename).delete().catch((e: any) =>
                         console.warn(`Failed to delete document file ${data.filename}:`, e.message)
                     )
                 );
@@ -129,7 +129,7 @@ export async function DELETE(
                     const filePath = decodeURIComponent(encodedPath);
                     console.log(`[Delete] Scheduling deletion for image file: ${filePath}`);
                     fileDeletePromises.push(
-                        bucket.file(filePath).delete().catch(e =>
+                        bucket.file(filePath).delete().catch((e: any) =>
                             console.warn(`Failed to delete image file ${filePath}:`, e.message)
                         )
                     );
