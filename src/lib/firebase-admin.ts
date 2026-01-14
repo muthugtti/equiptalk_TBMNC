@@ -16,12 +16,14 @@ export async function initAdmin() {
     }
 
     try {
+        // Fallback to known project ID if env vars are missing in Cloud Run context
         const projectId = process.env.GOOGLE_CLOUD_PROJECT_ID ||
             process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ||
-            process.env.FIREBASE_PROJECT_ID;
+            process.env.FIREBASE_PROJECT_ID ||
+            'equiptalk-317d8';
 
         // Log project ID attempt (sanitized for safety)
-        console.log(`[Firebase Admin] Attempting to init. Project ID present: ${!!projectId}, ID: ${projectId}`);
+        console.log(`[Firebase Admin] Attempting to init. Project ID: ${projectId}`);
 
         if (!projectId) {
             console.error('[Firebase Admin] Missing Project ID env var');
@@ -30,20 +32,33 @@ export async function initAdmin() {
 
         console.log(`[Firebase Admin] Initializing with project: ${projectId}`);
 
-        // Log credential strategy
-        console.log(`[Firebase Admin] Using applicationDefault credentials`);
+        // Check if we are in a Firebase Functions environment
+        if (process.env.FIREBASE_CONFIG) {
+            console.log('[Firebase Admin] Detected FIREBASE_CONFIG, assuming Cloud defaults.');
+            // When deployed to Firebase, often initializeApp() with no args is best 
+            // as it reads FIREBASE_CONFIG automatically.
+            // However, passing projectId explicitly is safe.
+        }
 
         const app = admin.initializeApp({
             credential: admin.credential.applicationDefault(),
             projectId: projectId,
-            storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+            storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'equiptalk-317d8.firebasestorage.app'
         });
 
         console.log('[Firebase Admin] Initialized successfully');
         return app;
     } catch (error: any) {
         console.error('[Firebase Admin] Initialization error:', error.message);
-        console.error('[Firebase Admin] Ensure you have run: gcloud auth application-default login');
+        // Try one last ditch attempt with no args if the above failed (e.g. credential issues)
+        try {
+            if (admin.apps.length === 0) {
+                console.log('[Firebase Admin] Retrying with default initializeApp()...');
+                return admin.initializeApp();
+            }
+        } catch (retryError) {
+            console.error('[Firebase Admin] Retry failed:', retryError);
+        }
         throw error;
     }
 }
