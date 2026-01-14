@@ -21,6 +21,12 @@ export default function DashboardLayout({
         return true;
     });
 
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
     useEffect(() => {
         // Dev bypass - already handled in init, but we still need to subscribe if NOT bypassed
         if (!loading && typeof window !== 'undefined' && localStorage.getItem('equiptalk_dev_user') === 'true') {
@@ -50,12 +56,6 @@ export default function DashboardLayout({
             </div>
         );
     }
-
-    const [mounted, setMounted] = useState(false);
-
-    useEffect(() => {
-        setMounted(true);
-    }, []);
 
     if (!mounted) {
         return null;
