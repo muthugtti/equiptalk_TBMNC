@@ -13,6 +13,7 @@ const nextConfig: NextConfig = {
       }
     ]
   },
+  transpilePackages: ['firebase-admin'],
   output: 'standalone',
 };
 
