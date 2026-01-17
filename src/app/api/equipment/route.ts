@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
         }
 
-        const { name, type, model, serialNumber, status, organizationId } = body;
+        const { name, type, model, serialNumber, status, organizationId, parentId } = body;
 
         if (!name || !type || !organizationId) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -82,6 +82,8 @@ export async function POST(req: NextRequest) {
             serialNumber: serialNumber || "",
             status: status || "OPERATIONAL",
             organizationId,
+            parentId: parentId || null,
+            order: 0, // Default order
             slug,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()

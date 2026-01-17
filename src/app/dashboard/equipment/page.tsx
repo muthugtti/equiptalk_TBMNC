@@ -1,8 +1,32 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import {
+    DndContext,
+    closestCenter,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    DragOverlay,
+    defaultDropAnimationSideEffects,
+    DragStartEvent,
+    DragOverEvent,
+    DragEndEvent,
+    DropAnimation,
+} from "@dnd-kit/core";
+import {
+    arrayMove,
+    SortableContext,
+    sortableKeyboardCoordinates,
+    verticalListSortingStrategy,
+    useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+
+// --- Interfaces ---
 
 interface Equipment {
     id: string;
@@ -15,24 +39,169 @@ interface Equipment {
     slug: string;
     updatedAt: string;
     parentId?: string | null;
+    order?: number;
 }
 
 interface EquipmentNode extends Equipment {
     children: EquipmentNode[];
-    isExpanded?: boolean;
 }
+
+// --- Components ---
+
+interface SortableNodeProps {
+    node: EquipmentNode;
+    level: number;
+    expandedIds: Set<string>;
+    toggleExpand: (id: string, e: React.MouseEvent) => void;
+    getStatusColor: (status: string) => string;
+    handleCreateChild: (id: string, e: React.MouseEvent) => void;
+    router: any;
+}
+
+function SortableNode({
+    node,
+    level,
+    expandedIds,
+    toggleExpand,
+    getStatusColor,
+    handleCreateChild,
+    router
+}: SortableNodeProps) {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging
+    } = useSortable({
+        id: node.id,
+        data: {
+            type: 'Equipment',
+            node,
+            parentId: node.parentId // meaningful data for drag handlers
+        }
+    });
+
+    const style = {
+        transform: CSS.Translate.toString(transform),
+        transition,
+        marginLeft: `${level * 24}px`,
+        opacity: isDragging ? 0.4 : 1,
+    };
+
+    const hasChildren = node.children.length > 0;
+    const isExpanded = expandedIds.has(node.id);
+
+    return (
+        <div ref={setNodeRef} style={style} className="touch-none relative flex flex-col mb-1">
+            <div
+                className={`
+                    group flex items-center justify-between p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 
+                    ${isDragging ? 'border-primary shadow-lg z-10' : 'hover:border-primary/50 shadow-sm'}
+                    transition-all cursor-pointer
+                `}
+                onClick={() => router.push(`/dashboard/equipment/${node.id}`)}
+                {...attributes}
+                {...listeners}
+            >
+                <div className="flex items-center gap-4">
+                    {/* Expand Toggle - Stop propagation to prevent drag */}
+                    {hasChildren ? (
+                        <button
+                            onPointerDown={e => e.stopPropagation()}
+                            onClick={(e) => toggleExpand(node.id, e)}
+                            className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400"
+                        >
+                            <span className="material-symbols-outlined">
+                                {isExpanded ? 'remove' : 'add'}
+                            </span>
+                        </button>
+                    ) : (
+                        <div className="w-8 h-8"></div>
+                    )}
+
+                    {/* Icon */}
+                    <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-500">
+                        <span className="material-symbols-outlined">
+                            {node.type.toLowerCase().includes('factory') ? 'factory' :
+                                node.type.toLowerCase().includes('cell') ? 'grid_view' :
+                                    'precision_manufacturing'}
+                        </span>
+                    </div>
+
+                    {/* Details */}
+                    <div>
+                        <h3 className="text-base font-bold text-gray-900 dark:text-white">{node.name}</h3>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{node.type} • {node.model || 'No Model'}</p>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-4">
+                    <span className={`px-2.5 py-1 rounded-md text-xs font-bold ${getStatusColor(node.status)}`}>
+                        {node.status}
+                    </span>
+
+                    <button
+                        onPointerDown={e => e.stopPropagation()}
+                        onClick={(e) => handleCreateChild(node.id, e)}
+                        className="hidden group-hover:flex items-center gap-1 px-3 py-1.5 rounded-lg text-primary bg-primary/10 hover:bg-primary/20 text-xs font-bold transition-colors"
+                    >
+                        <span className="material-symbols-outlined text-sm">add</span>
+                        Add Child
+                    </button>
+                    <span className="material-symbols-outlined text-gray-300 dark:text-gray-600 cursor-grab active:cursor-grabbing">drag_indicator</span>
+                </div>
+            </div>
+
+            {/* Nested List */}
+            {isExpanded && hasChildren && (
+                <div className="mt-1">
+                    <SortableContext
+                        items={node.children.map(c => c.id)}
+                        strategy={verticalListSortingStrategy}
+                    >
+                        {node.children.map(child => (
+                            <SortableNode
+                                key={child.id}
+                                node={child}
+                                level={level + 1}
+                                expandedIds={expandedIds}
+                                toggleExpand={toggleExpand}
+                                getStatusColor={getStatusColor}
+                                handleCreateChild={handleCreateChild}
+                                router={router}
+                            />
+                        ))}
+                    </SortableContext>
+                </div>
+            )}
+        </div>
+    );
+}
+
 
 export default function EquipmentPage() {
     const [equipmentList, setEquipmentList] = useState<Equipment[]>([]);
     const [loading, setLoading] = useState(true);
     const [viewMode, setViewMode] = useState<"hierarchy" | "grid">("hierarchy");
-    const [filter, setFilter] = useState<"all" | "active" | "maintenance" | "down">("all");
+    const [filter, setFilter] = useState<"ALL" | "OPERATIONAL" | "MAINTENANCE" | "DOWN">("ALL");
     const [searchQuery, setSearchQuery] = useState("");
-
-    // For hierarchy state
     const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+    const [activeId, setActiveId] = useState<string | null>(null);
 
     const router = useRouter();
+
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 8, // Require movement of 8px to start drag, preventing accidental drags on click
+            },
+        }),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    );
 
     useEffect(() => {
         fetchEquipment();
@@ -44,7 +213,9 @@ export default function EquipmentPage() {
             const res = await fetch("/api/equipment");
             const data = await res.json();
             if (data.equipment) {
-                setEquipmentList(data.equipment);
+                // Ensure order provided or default
+                const eq = data.equipment.map((e: any) => ({ ...e, order: e.order || 0 }));
+                setEquipmentList(eq);
             }
         } catch (error) {
             console.error("Failed to fetch equipment", error);
@@ -53,17 +224,40 @@ export default function EquipmentPage() {
         }
     };
 
-    const buildHierarchy = (items: Equipment[]): EquipmentNode[] => {
+    // --- Data Processing ---
+
+    // 1. Filter
+    const filteredList = useMemo(() => {
+        let filtered = equipmentList;
+        if (filter !== 'ALL') {
+            filtered = filtered.filter(i => i.status === filter);
+        }
+        if (searchQuery) {
+            const q = searchQuery.toLowerCase();
+            filtered = filtered.filter(i =>
+                i.name.toLowerCase().includes(q) ||
+                i.model.toLowerCase().includes(q)
+            );
+        }
+        return filtered;
+    }, [equipmentList, filter, searchQuery]);
+
+    // 2. Build Hierarchy
+    // We memoize this to prevent expensive rebuilds unless data changes
+    const hierarchyRoots = useMemo(() => {
         const itemMap = new Map<string, EquipmentNode>();
         const roots: EquipmentNode[] = [];
 
-        // First pass: create nodes
-        items.forEach(item => {
+        // Sort by order first to ensure correct initial display
+        const sortedItems = [...filteredList].sort((a, b) => (a.order || 0) - (b.order || 0));
+
+        // Create nodes
+        sortedItems.forEach(item => {
             itemMap.set(item.id, { ...item, children: [] });
         });
 
-        // Second pass: link parents
-        items.forEach(item => {
+        // Link
+        sortedItems.forEach(item => {
             const node = itemMap.get(item.id)!;
             if (item.parentId && itemMap.has(item.parentId)) {
                 itemMap.get(item.parentId)!.children.push(node);
@@ -73,33 +267,24 @@ export default function EquipmentPage() {
         });
 
         return roots;
-    };
+    }, [filteredList]);
+
+
+    // --- Actions ---
 
     const toggleExpand = (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
         const newExpanded = new Set(expandedIds);
-        if (newExpanded.has(id)) {
-            newExpanded.delete(id);
-        } else {
-            newExpanded.add(id);
-        }
+        if (newExpanded.has(id)) newExpanded.delete(id);
+        else newExpanded.add(id);
         setExpandedIds(newExpanded);
     };
 
     const collapseAll = () => setExpandedIds(new Set());
-    const expandAll = () => {
-        const allIds = new Set(equipmentList.map(e => e.id));
-        setExpandedIds(allIds);
-    };
+    const expandAll = () => setExpandedIds(new Set(equipmentList.map(e => e.id)));
 
-    const handleCreateChild = async (parentId: string, e: React.MouseEvent) => {
+    const handleCreateChild = (parentId: string, e: React.MouseEvent) => {
         e.stopPropagation();
-        // Redirect to detail create page with parentId query param logic 
-        // OR open a modal. For now let's just create a generic child for demo, 
-        // effectively we should probably navigate to a create page.
-        // But user asked for "Add Child" button.
-
-        // Simple mock create for now or better, navigate to detail page with parentId
         router.push(`/dashboard/equipment/new?parentId=${parentId}`);
     };
 
@@ -112,101 +297,172 @@ export default function EquipmentPage() {
         }
     };
 
-    const filterItems = (items: Equipment[]) => {
-        let filtered = items;
+    // --- Drag & Drop Handlers ---
 
-        if (filter !== 'all') {
-            const mapFilter: Record<string, string> = {
-                'active': 'OPERATIONAL',
-                'maintenance': 'MAINTENANCE',
-                'down': 'DOWN'
-            };
-            filtered = filtered.filter(i => i.status === mapFilter[filter]);
-        }
+    function findItem(id: string, items: Equipment[]) {
+        return items.find(i => i.id === id);
+    }
 
-        if (searchQuery) {
-            const q = searchQuery.toLowerCase();
-            filtered = filtered.filter(i =>
-                i.name.toLowerCase().includes(q) ||
-                i.model.toLowerCase().includes(q)
-            );
-        }
-
-        return filtered;
+    const handleDragStart = (event: DragStartEvent) => {
+        setActiveId(event.active.id as string);
     };
 
-    const filteredList = filterItems(equipmentList);
-    const hierarchyRoots = buildHierarchy(filteredList);
+    const handleDragOver = (event: DragOverEvent) => {
+        const { active, over } = event;
+        // DragOver is primarily for visual cues or real-time list switching.
+        // With our simple structure, we can defer most logic to DragEnd.
+        // However, if we wanted to visually expand a node when hovering, we'd do it here.
+    };
 
-    const HierarchyNode = ({ node, level = 0 }: { node: EquipmentNode, level?: number }) => {
-        const hasChildren = node.children.length > 0;
-        const isExpanded = expandedIds.has(node.id);
+    const handleDragEnd = async (event: DragEndEvent) => {
+        const { active, over } = event;
+        setActiveId(null);
 
-        return (
-            <div className={`relative flex flex-col`}>
-                <div
-                    className={`
-                        group flex items-center justify-between p-4 my-1 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 
-                        hover:border-primary/50 transition-all cursor-pointer shadow-sm
-                    `}
-                    style={{ marginLeft: `${level * 24}px` }}
-                    onClick={() => router.push(`/dashboard/equipment/${node.id}`)}
-                >
-                    <div className="flex items-center gap-4">
-                        {/* Expand Toggle */}
-                        {hasChildren ? (
-                            <button
-                                onClick={(e) => toggleExpand(node.id, e)}
-                                className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400"
-                            >
-                                <span className="material-symbols-outlined">
-                                    {isExpanded ? 'remove' : 'add'}
-                                </span>
-                            </button>
-                        ) : (
-                            <div className="w-8 h-8"></div>
-                        )}
+        if (!over) return;
 
-                        {/* Icon based on type (simple heuristic) */}
-                        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-500">
-                            <span className="material-symbols-outlined">
-                                {node.type.toLowerCase().includes('factory') ? 'factory' :
-                                    node.type.toLowerCase().includes('cell') ? 'grid_view' :
-                                        'precision_manufacturing'}
-                            </span>
-                        </div>
+        const activeId = active.id as string;
+        const overId = over.id as string;
 
-                        {/* Details */}
-                        <div>
-                            <h3 className="text-base font-bold text-gray-900 dark:text-white">{node.name}</h3>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">{node.type} • {node.model || 'No Model'}</p>
-                        </div>
-                    </div>
+        if (activeId === overId) return;
 
-                    <div className="flex items-center gap-4">
-                        <span className={`px-2.5 py-1 rounded-md text-xs font-bold ${getStatusColor(node.status)}`}>
-                            {node.status}
-                        </span>
+        // Perform optimistic update
+        const newEquipmentList = [...equipmentList];
+        const activeItemIndex = newEquipmentList.findIndex(i => i.id === activeId);
+        const overItemIndex = newEquipmentList.findIndex(i => i.id === overId);
 
-                        <button
-                            onClick={(e) => handleCreateChild(node.id, e)}
-                            className="hidden group-hover:flex items-center gap-1 px-3 py-1.5 rounded-lg text-primary bg-primary/10 hover:bg-primary/20 text-xs font-bold transition-colors"
-                        >
-                            <span className="material-symbols-outlined text-sm">add</span>
-                            Add Child
-                        </button>
-                    </div>
+        if (activeItemIndex === -1 || overItemIndex === -1) return;
+
+        const activeItem = newEquipmentList[activeItemIndex];
+        const overItem = newEquipmentList[overItemIndex];
+
+        // Logic 1: Reparenting vs Reordering
+        // If sorting within the same context is handled by SortableContext,
+        // dnd-kit gives us the `over` target.
+        // If we drop ON another item, is it a reorder or a reparent?
+        // In a flat list, it's reorder. In a tree, it's ambiguous.
+        // We will assume:
+        // - If `active` and `over` have SAME parent -> Reorder (swap orders)
+        // - If `active` and `over` have DIFFERENT parent -> Reparent (change parentId of `active` to `over`'s parent)
+        // WAIT: Re-parenting usually means making it a CHILD of `over`.
+        // But SortableContext implies we are reordering the list `over` belongs to.
+
+        // Simplifying Assumption for this iteration:
+        // We only support reordering within the SAME parent group (siblings).
+        // OR moving to a different parent group IF we drag to that group's list.
+        // Since we are using recursive SortableContexts, `dnd-kit` will identify the container.
+
+        // Actually, dnd-kit `arrayMove` works on indices.
+        // If we move between lists (reparenting), we need to manually update `parentId`.
+
+        // Let's check if the parentIds match.
+        const sameParent = activeItem.parentId === overItem.parentId;
+
+        if (sameParent) {
+            // Reorder
+            // We need to re-sort the SUBSET of items that share this parent
+            // But globally, we can just swap orders if we maintain a global list? No, order is usually creating a sequence.
+            // We will simply swap the `order` values of the items in the affected list (or shifting logic).
+            // A better approach: 
+            // 1. Get all siblings.
+            // 2. Perform `arrayMove` on siblings.
+            // 3. Update `order` for all siblings based on new index.
+
+            const siblings = newEquipmentList.filter(e => e.parentId === activeItem.parentId).sort((a, b) => (a.order || 0) - (b.order || 0));
+            const oldIndex = siblings.findIndex(e => e.id === activeId);
+            const newIndex = siblings.findIndex(e => e.id === overId);
+
+            const newSiblings = arrayMove(siblings, oldIndex, newIndex);
+
+            // Update orders
+            newSiblings.forEach((item, index) => {
+                const original = newEquipmentList.find(e => e.id === item.id);
+                if (original) original.order = index;
+            });
+
+            setEquipmentList(newEquipmentList);
+
+            // Persist
+            persistReorder(newSiblings.map(i => ({ id: i.id, order: i.order!, parentId: i.parentId })));
+        } else {
+            // Moved to a different list (Reparenting)
+            // The `over` item belongs to a list. We are inserting `active` into that list, relative to `over`.
+            // So `active`'s new parent becomes `over`'s parent.
+
+            const newParentId = overItem.parentId;
+
+            // Get target siblings (including the one we are moving to)
+            const targetSiblings = newEquipmentList.filter(e => e.parentId === newParentId).sort((a, b) => (a.order || 0) - (b.order || 0));
+            const targetIndex = targetSiblings.findIndex(e => e.id === overId);
+
+            // Insert active item into targetSiblings at targetIndex
+            // We can just update activeItem's parentId and execute the reorder logic.
+
+            activeItem.parentId = newParentId;
+            // Now it essentially SHOULD be in targetSiblings.
+            // We need to place it correctly.
+            // Re-fetch siblings with activeItem included
+            const updatedSiblings = [...targetSiblings];
+            updatedSiblings.splice(targetIndex, 0, activeItem); // simple insert
+
+            // Update orders
+            updatedSiblings.forEach((item, index) => {
+                const original = newEquipmentList.find(e => e.id === item.id);
+                if (original) original.order = index;
+            });
+
+            // We also need to remove it from old siblings list order logic? 
+            // Strictly speaking, old siblings order is fine, or we can normalize it. 
+            // For simplicity, we just save the new state of the MOVED item and its NEW siblings.
+
+            setEquipmentList([...newEquipmentList]);
+            persistReorder(updatedSiblings.map(i => ({ id: i.id, order: i.order!, parentId: i.parentId })));
+        }
+    };
+
+    const persistReorder = async (items: { id: string, order: number, parentId?: string | null }[]) => {
+        try {
+            await fetch('/api/equipment/reorder', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ items })
+            });
+        } catch (error) {
+            console.error("Failed to persist order", error);
+        }
+    };
+
+    // Animation for Drop
+    const dropAnimation: DropAnimation = {
+        sideEffects: defaultDropAnimationSideEffects({
+            styles: {
+                active: {
+                    opacity: '0.4',
+                },
+            },
+        }),
+    };
+
+    // Find the active node for the DragOverlay
+    const activeNode = activeId ? equipmentList.find(e => e.id === activeId) as EquipmentNode : null;
+    const ActiveOverlayNode = activeNode ? (
+        <div className="p-4 rounded-xl border border-primary bg-white dark:bg-gray-800 shadow-xl opacity-90 cursor-grabbing">
+            <div className="flex items-center gap-4">
+                <div className="w-8 h-8"></div>
+                <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-500">
+                    <span className="material-symbols-outlined">
+                        {activeNode.type.toLowerCase().includes('factory') ? 'factory' :
+                            activeNode.type.toLowerCase().includes('cell') ? 'grid_view' :
+                                'precision_manufacturing'}
+                    </span>
                 </div>
-
-                {isExpanded && node.children.map(child => (
-                    <div key={child.id} className="relative">
-                        {/* Connector Lines could go here via CSS or SVG if needed for strict visual match */}
-                        <HierarchyNode node={child} level={level + 1} />
-                    </div>
-                ))}
+                <div>
+                    <h3 className="text-base font-bold text-gray-900 dark:text-white">{activeNode.name}</h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{activeNode.type}</p>
+                </div>
             </div>
-        );
-    };
+        </div>
+    ) : null;
+
 
     return (
         <main className="flex-1 px-4 sm:px-6 md:px-10 py-8 bg-background-light dark:bg-background-dark min-h-screen">
@@ -255,16 +511,16 @@ export default function EquipmentPage() {
                         />
                     </div>
                     <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
-                        {['all', 'active', 'repair', 'decommissioned'].map((f) => (
+                        {['ALL', 'OPERATIONAL', 'MAINTENANCE', 'DOWN'].map((f) => (
                             <button
                                 key={f}
-                                onClick={() => setFilter(f as any)} // Type loose for demo
+                                onClick={() => setFilter(f as any)}
                                 className={`
                                     px-4 py-1.5 rounded-lg text-sm font-bold whitespace-nowrap transition-colors
-                                    ${filter === f || (f === 'active' && filter === 'active') /* simplify logic */ ? 'bg-primary/10 text-primary' : 'text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700'}
+                                    ${filter === f ? 'bg-primary/10 text-primary' : 'text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700'}
                                 `}
                             >
-                                {f.charAt(0).toUpperCase() + f.slice(1)}
+                                {f === 'ALL' ? 'All' : f.charAt(0) + f.slice(1).toLowerCase()}
                             </button>
                         ))}
                     </div>
@@ -297,15 +553,42 @@ export default function EquipmentPage() {
                 ) : (
                     <div className="space-y-4">
                         {viewMode === 'hierarchy' ? (
-                            <div className="space-y-2">
-                                {hierarchyRoots.length > 0 ? (
-                                    hierarchyRoots.map(node => <HierarchyNode key={node.id} node={node} />)
-                                ) : (
-                                    <p className="text-gray-500">No matching items configured in hierarchy.</p>
-                                )}
-                            </div>
+                            <DndContext
+                                sensors={sensors}
+                                collisionDetection={closestCenter}
+                                onDragStart={handleDragStart}
+                                onDragOver={handleDragOver}
+                                onDragEnd={handleDragEnd}
+                            >
+                                <div className="space-y-2">
+                                    {hierarchyRoots.length > 0 ? (
+                                        <SortableContext
+                                            items={hierarchyRoots.map(r => r.id)}
+                                            strategy={verticalListSortingStrategy}
+                                        >
+                                            {hierarchyRoots.map(node => (
+                                                <SortableNode
+                                                    key={node.id}
+                                                    node={node}
+                                                    level={0}
+                                                    expandedIds={expandedIds}
+                                                    toggleExpand={toggleExpand}
+                                                    getStatusColor={getStatusColor}
+                                                    handleCreateChild={handleCreateChild}
+                                                    router={router}
+                                                />
+                                            ))}
+                                        </SortableContext>
+                                    ) : (
+                                        <p className="text-gray-500">No matching items configured in hierarchy.</p>
+                                    )}
+                                </div>
+                                <DragOverlay dropAnimation={dropAnimation}>
+                                    {ActiveOverlayNode}
+                                </DragOverlay>
+                            </DndContext>
                         ) : (
-                            // Fallback Node-like grid or table
+                            // Grid View (No Drag Support for now)
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {filteredList.map(item => (
                                     <div

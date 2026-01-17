@@ -1,11 +1,10 @@
-
 "use client";
-
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/lib/firebase";
+import AccountDrawer from "@/components/dashboard/AccountDrawer";
 
 export default function DashboardLayout({
     children,
@@ -22,6 +21,7 @@ export default function DashboardLayout({
     });
 
     const [mounted, setMounted] = useState(false);
+    const [isAccountDrawerOpen, setIsAccountDrawerOpen] = useState(false);
 
     useEffect(() => {
         setMounted(true);
@@ -102,14 +102,20 @@ export default function DashboardLayout({
                         <button className="flex h-10 w-10 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600">
                             <span className="material-symbols-outlined">notifications</span>
                         </button>
-                        <div
-                            className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10"
+                        <button
+                            onClick={() => setIsAccountDrawerOpen(true)}
+                            className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 cursor-pointer hover:opacity-80 transition-opacity"
                             style={{ backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuDpqhkUII6imYBNXQ_tC2fVKezNp9wBFqvFKWZvIhM_BFwQ2v2rbOxLDwXg9-pApQa-Xr_ZTGqBhDZvE8NSqMCLEVhYtEjpc7InGuODI61zdPPe_Dp4fNbfbteoFyDIBxur57u7sxMvSHjoIGBPyWaNvOghhiVUSffuiDBLMjt9o8CpQ7zfywwVsylwifsbuu4Dxm0wkrvRQtckxgVqRiZf2cv1ja_7dWfCPMakrbgYR7x23kPUUe7IlSpQidVobor3hJJjW1ftSp32")' }}
-                        ></div>
+                        ></button>
                     </div>
                 </header>
                 {children}
             </div>
+
+            <AccountDrawer
+                isOpen={isAccountDrawerOpen}
+                onClose={() => setIsAccountDrawerOpen(false)}
+            />
         </div>
     );
 }

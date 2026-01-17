@@ -224,7 +224,7 @@ export default function ReportIncidentModal({
                             disabled={isLoading}
                             className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 font-bold text-sm shadow-sm disabled:opacity-70 disabled:cursor-not-allowed transition-colors"
                         >
-                            {isLoading ? "Saving..." : "Submit Report"}
+                            {isLoading ? "Saving..." : "Submit Incident"}
                         </button>
                     </div>
                 </form>
