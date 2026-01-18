@@ -236,54 +236,33 @@ export default function EquipmentDetailPage({ params }: { params: Promise<{ id: 
         }
     };
 
+    const handleDeleteDocument = async (docId: string, docName: string) => {
+        if (!confirm(`Are you sure you want to delete "${docName}"? This cannot be undone.`)) {
+            return;
+        }
+
+        try {
+            const res = await fetch(`/api/documents?id=${docId}`, {
+                method: 'DELETE'
+            });
+
+            if (res.ok) {
+                // Update local state to remove the deleted document
+                setFormData(prev => ({
+                    ...prev,
+                    documents: prev.documents.filter((d: any) => d.id !== docId)
+                }));
+            } else {
+                const error = await res.json();
+                alert(`Failed to delete document: ${error.details || error.error}`);
+            }
+        } catch (error: any) {
+            console.error("Error deleting document", error);
+            alert(`Error deleting document: ${error.message}`);
+        }
+    };
+
     // --- RENDER HELPERS ---
-
-    const DeleteModal = () => (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full p-6 border border-gray-200 dark:border-gray-700">
-                <div className="flex items-center gap-3 mb-4 text-red-600 dark:text-red-400">
-                    <span className="material-symbols-outlined text-3xl">warning</span>
-                    <h3 className="text-xl font-bold">Delete Equipment?</h3>
-                </div>
-
-                <p className="text-gray-600 dark:text-gray-300 mb-4">
-                    This action is <span className="font-bold">irreversible</span>.
-                    It will permanently delete <strong>{formData.name}</strong> and all associated documents and images.
-                </p>
-
-                <div className="mb-6">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Type <strong>DELETE</strong> to confirm:
-                    </label>
-                    <input
-                        type="text"
-                        value={deleteConfirmationText}
-                        onChange={(e) => setDeleteConfirmationText(e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
-                        placeholder="DELETE"
-                    />
-                </div>
-
-                <div className="flex items-center justify-end gap-3">
-                    <button
-                        onClick={() => setIsDeleteModalOpen(false)}
-                        className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium"
-                        disabled={isDeleting}
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        onClick={confirmDelete}
-                        disabled={deleteConfirmationText !== "DELETE" || isDeleting}
-                        className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-bold"
-                    >
-                        {isDeleting && <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>}
-                        {isDeleting ? "Deleting..." : "Delete Forever"}
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
 
     if (loading) {
         return (
@@ -489,7 +468,12 @@ export default function EquipmentDetailPage({ params }: { params: Promise<{ id: 
                                                     </div>
                                                     <div className="flex items-center gap-2">
                                                         <a href={doc.url} target="_blank" rel="noopener noreferrer" className="p-2 rounded-full hover:bg-primary/10 text-gray-400 hover:text-primary"><span className="material-symbols-outlined text-xl">visibility</span></a>
-                                                        <button className="p-2 rounded-full hover:bg-red-500/10 text-gray-400 hover:text-red-500"><span className="material-symbols-outlined text-xl">delete</span></button>
+                                                        <button
+                                                            onClick={() => handleDeleteDocument(doc.id, doc.name)}
+                                                            className="p-2 rounded-full hover:bg-red-500/10 text-gray-400 hover:text-red-500"
+                                                        >
+                                                            <span className="material-symbols-outlined text-xl">delete</span>
+                                                        </button>
                                                     </div>
                                                 </div>
                                             ))
@@ -690,7 +674,87 @@ export default function EquipmentDetailPage({ params }: { params: Promise<{ id: 
                     </div>
                 </div>
             </div>
-            {isDeleteModalOpen && <DeleteModal />}
+            {isDeleteModalOpen && (
+                <DeleteModal
+                    isOpen={isDeleteModalOpen}
+                    onClose={() => setIsDeleteModalOpen(false)}
+                    onConfirm={confirmDelete}
+                    isDeleting={isDeleting}
+                    equipmentName={formData.name}
+                    confirmationText={deleteConfirmationText}
+                    setConfirmationText={setDeleteConfirmationText}
+                />
+            )}
         </main>
+    );
+}
+
+interface DeleteModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    onConfirm: () => void;
+    isDeleting: boolean;
+    equipmentName: string;
+    confirmationText: string;
+    setConfirmationText: (text: string) => void;
+}
+
+function DeleteModal({
+    isOpen,
+    onClose,
+    onConfirm,
+    isDeleting,
+    equipmentName,
+    confirmationText,
+    setConfirmationText
+}: DeleteModalProps) {
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full p-6 border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center gap-3 mb-4 text-red-600 dark:text-red-400">
+                    <span className="material-symbols-outlined text-3xl">warning</span>
+                    <h3 className="text-xl font-bold">Delete Equipment?</h3>
+                </div>
+
+                <p className="text-gray-600 dark:text-gray-300 mb-4">
+                    This action is <span className="font-bold">irreversible</span>.
+                    It will permanently delete <strong>{equipmentName}</strong> and all associated documents and images.
+                </p>
+
+                <div className="mb-6">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Type <strong>DELETE</strong> to confirm:
+                    </label>
+                    <input
+                        type="text"
+                        value={confirmationText}
+                        onChange={(e) => setConfirmationText(e.target.value)}
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                        placeholder="DELETE"
+                        autoFocus
+                    />
+                </div>
+
+                <div className="flex items-center justify-end gap-3">
+                    <button
+                        onClick={onClose}
+                        className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg font-medium"
+                        disabled={isDeleting}
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={onConfirm}
+                        disabled={confirmationText !== "DELETE" || isDeleting}
+                        className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-bold"
+                    >
+                        {isDeleting && <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>}
+                        {isDeleting ? "Deleting..." : "Delete Forever"}
+                    </button>
+                </div>
+            </div>
+        </div>
     );
 }

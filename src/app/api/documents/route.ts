@@ -97,6 +97,24 @@ export async function DELETE(req: NextRequest) {
                 console.warn("Failed to delete file from storage (might rely on manual cleanup or file not found):", storageError);
                 // Proceed to delete metadata anyway
             }
+        } else if (docData?.url && docData.url.includes("firebasestorage.googleapis.com")) {
+            // Legacy support: Try to parse filename from URL
+            try {
+                const { getStorageBucket } = await import("@/lib/firebase-admin");
+                const bucket = await getStorageBucket();
+
+                // Extract path from URL: .../o/equipment%2F[id]%2Ffile.jpg?alt=...
+                const urlObj = new URL(docData.url);
+                const pathStart = urlObj.pathname.indexOf('/o/');
+                if (pathStart !== -1) {
+                    const encodedPath = urlObj.pathname.substring(pathStart + 3);
+                    const filePath = decodeURIComponent(encodedPath);
+                    console.log(`[Delete Document] Attempting to delete legacy file from URL: ${filePath}`);
+                    await bucket.file(filePath).delete();
+                }
+            } catch (storageError: any) {
+                console.warn("Failed to delete legacy file from storage:", storageError.message);
+            }
         }
 
         await docRef.delete();
