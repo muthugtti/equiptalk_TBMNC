@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { auth } from '@/lib/firebase';
+import { onAuthStateChanged, User, signOut } from 'firebase/auth';
 
 interface AccountDrawerProps {
     isOpen: boolean;
@@ -9,6 +11,25 @@ interface AccountDrawerProps {
 
 export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
     const [appearance, setAppearance] = useState<'dark' | 'light'>('dark');
+    const [user, setUser] = useState<User | null>(null);
+
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+            setUser(currentUser);
+        });
+        return () => unsubscribe();
+    }, []);
+
+    const handleSignOut = async () => {
+        try {
+            await signOut(auth);
+            onClose(); // Close drawer after sign out (optional, or redirect)
+            // You might want to redirect to login page here if not handled by a protected route wrapper
+            window.location.href = '/login';
+        } catch (error) {
+            console.error("Error signing out:", error);
+        }
+    };
 
     if (!isOpen) return null;
 
@@ -36,7 +57,7 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
                     <div className="absolute -bottom-10 left-1/2 -translate-x-1/2">
                         <div className="h-20 w-20 rounded-full border-4 border-white bg-white overflow-hidden shadow-lg">
                             <img
-                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuDpqhkUII6imYBNXQ_tC2fVKezNp9wBFqvFKWZvIhM_BFwQ2v2rbOxLDwXg9-pApQa-Xr_ZTGqBhDZvE8NSqMCLEVhYtEjpc7InGuODI61zdPPe_Dp4fNbfbteoFyDIBxur57u7sxMvSHjoIGBPyWaNvOghhiVUSffuiDBLMjt9o8CpQ7zfywwVsylwifsbuu4Dxm0wkrvRQtckxgVqRiZf2cv1ja_7dWfCPMakrbgYR7x23kPUUe7IlSpQidVobor3hJJjW1ftSp32"
+                                src={user?.photoURL || "https://lh3.googleusercontent.com/aida-public/AB6AXuDpqhkUII6imYBNXQ_tC2fVKezNp9wBFqvFKWZvIhM_BFwQ2v2rbOxLDwXg9-pApQa-Xr_ZTGqBhDZvE8NSqMCLEVhYtEjpc7InGuODI61zdPPe_Dp4fNbfbteoFyDIBxur57u7sxMvSHjoIGBPyWaNvOghhiVUSffuiDBLMjt9o8CpQ7zfywwVsylwifsbuu4Dxm0wkrvRQtckxgVqRiZf2cv1ja_7dWfCPMakrbgYR7x23kPUUe7IlSpQidVobor3hJJjW1ftSp32"}
                                 alt="Profile"
                                 className="h-full w-full object-cover"
                             />
@@ -49,13 +70,13 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
 
                     {/* User Info */}
                     <div className="mb-6">
-                        <h2 className="text-xl font-bold text-gray-900">Muthu - masstechllc - USA</h2>
+                        <h2 className="text-xl font-bold text-gray-900">{user?.displayName || "Guest User"}</h2>
                         <div className="flex items-center justify-center gap-2 mt-1 text-gray-500 text-sm font-medium">
                             <span className="material-symbols-outlined text-lg">work</span>
-                            <span>Equiptalk - Admin</span>
+                            <span>Equiptalk - User</span>
                         </div>
                         <div className="flex items-center justify-center gap-2 mt-1 text-gray-500 text-sm cursor-pointer hover:text-primary transition-colors">
-                            <span>muthu@masstechllc.com</span>
+                            <span>{user?.email || "No email"}</span>
                             <span className="material-symbols-outlined text-base">content_copy</span>
                         </div>
                     </div>
@@ -78,7 +99,10 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
                             <span className="material-symbols-outlined text-xl">person</span>
                             My Account
                         </button>
-                        <button className="flex-1 flex items-center justify-center gap-2 text-red-500 font-medium text-sm hover:underline">
+                        <button
+                            onClick={handleSignOut}
+                            className="flex-1 flex items-center justify-center gap-2 text-red-500 font-medium text-sm hover:underline"
+                        >
                             <span className="material-symbols-outlined text-xl">logout</span>
                             Sign Out
                         </button>

@@ -1,0 +1,7 @@
+{
+  "name": "Equiptalk.ai - TBMNC - UX",
+  "description": "Equiptalk.ai is an interactive audio chatbot. Ask questions using your voice and hear the AI's responses, with real-time transcription.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getStorageBucket } from "@/lib/firebase-admin";
+import { getStorageBucket, getDb } from "@/lib/firebase-admin";
 import { v4 as uuidv4 } from 'uuid';
+import { extractTextFromPdf } from '@/lib/text-extractor';
 
 // Max file size: 10MB
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -57,6 +58,27 @@ export async function POST(req: NextRequest) {
                 }
             },
         });
+
+        // Extract and save text for PDFs
+        if (file.type === 'application/pdf') {
+            try {
+                const text = await extractTextFromPdf(buffer);
+                if (text) {
+                    const db = await getDb();
+                    await db.collection('equipment_docs_text').add({
+                        equipmentId: equipmentId,
+                        fileName: file.name,
+                        storagePath: filename,
+                        text: text,
+                        uploadedAt: new Date().toISOString()
+                    });
+                    console.log(`[Upload] Extracted ${text.length} chars from ${file.name}`);
+                }
+            } catch (extractError) {
+                console.error("[Upload] Text extraction failed:", extractError);
+                // Continue, don't fail the upload just because extraction failed
+            }
+        }
 
         // Construct the standard Firebase Storage URL
         const encodedPath = encodeURIComponent(filename);

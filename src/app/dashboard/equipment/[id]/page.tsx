@@ -4,6 +4,7 @@ import { useState, useEffect, use } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import EquipmentChat from "@/components/chat/EquipmentChat";
 
 export default function EquipmentDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
@@ -417,6 +418,13 @@ export default function EquipmentDetailPage({ params }: { params: Promise<{ id: 
                                     <span className="material-symbols-outlined text-xl">share</span>
                                     <p className="text-sm font-bold">Public Access</p>
                                 </button>
+                                <button
+                                    onClick={() => setActiveTab("chat")}
+                                    className={`flex items-center justify-center gap-2 border-b-2 py-4 px-1 transition-colors ${activeTab === 'chat' ? 'border-primary text-primary' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-primary hover:border-primary/50'}`}
+                                >
+                                    <span className="material-symbols-outlined text-xl">forum</span>
+                                    <p className="text-sm font-bold">AI Assistant</p>
+                                </button>
                             </nav>
                         </div>
 
@@ -670,22 +678,34 @@ export default function EquipmentDetailPage({ params }: { params: Promise<{ id: 
                                     </div>
                                 </div>
                             )}
+
+                            {activeTab === 'chat' && (
+                                <div className="space-y-6">
+                                    <div>
+                                        <h3 className="text-xl font-bold text-gray-900 dark:text-white">AI Equipment Assistant</h3>
+                                        <p className="text-gray-500 dark:text-gray-400 mt-1">Chat with the manual and get instant answers about this equipment.</p>
+                                    </div>
+                                    <EquipmentChat equipmentId={id} />
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
             </div>
-            {isDeleteModalOpen && (
-                <DeleteModal
-                    isOpen={isDeleteModalOpen}
-                    onClose={() => setIsDeleteModalOpen(false)}
-                    onConfirm={confirmDelete}
-                    isDeleting={isDeleting}
-                    equipmentName={formData.name}
-                    confirmationText={deleteConfirmationText}
-                    setConfirmationText={setDeleteConfirmationText}
-                />
-            )}
-        </main>
+            {
+                isDeleteModalOpen && (
+                    <DeleteModal
+                        isOpen={isDeleteModalOpen}
+                        onClose={() => setIsDeleteModalOpen(false)}
+                        onConfirm={confirmDelete}
+                        isDeleting={isDeleting}
+                        equipmentName={formData.name}
+                        confirmationText={deleteConfirmationText}
+                        setConfirmationText={setDeleteConfirmationText}
+                    />
+                )
+            }
+        </main >
     );
 }
 

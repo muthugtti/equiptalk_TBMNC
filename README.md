@@ -1,36 +1,49 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Equiptalk AI
 
-## Getting Started
+Equiptalk AI is a cutting-edge equipment management system powered by AI. It streamlines equipment tracking, incident reporting, and maintenance workflows.
 
-First, run the development server:
+## 📚 Documentation
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Detailed documentation is available in the `docs` directory:
+
+- [**Architecture**](docs/architecture.md): System overview, tech stack, and data flow.
+- [**Setup**](docs/setup.md): Environment setup, installation, and local development.
+- [**Deployment**](docs/deployment.md): Deployment guides for Firebase Hosting.
+- [**API Reference**](docs/api.md): Detailed API documentation.
+- [**Database**](docs/database.md): Firestore schema and security rules.
+- [**Components**](docs/components.md): UI component library and design system.
+
+## 🚀 Quick Start
+
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/muthugtti/equiptalk-ai.git
+    cd equiptalk-ai
+    ```
+
+2.  **Install dependencies:**
+    ```bash
+    npm install
+    ```
+
+3.  **Set up environment variables:**
+    Copy `.env.example` to `.env.local` and fill in your Firebase credentials.
+
+4.  **Run the development server:**
+    ```bash
+    npm run dev
+    ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🛠 Tech Stack
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+-   **Framework:** [Next.js](https://nextjs.org/) (App Router)
+-   **Language:** [TypeScript](https://www.typescriptlang.org/)
+-   **Styling:** [Tailwind CSS](https://tailwindcss.com/)
+-   **Backend/Database:** [Firebase](https://firebase.google.com/) (Firestore, Auth, Storage, Functions)
+-   **AI Integration:** [Google Vertex AI](https://cloud.google.com/vertex-ai)
 
-## Learn More
+## 📄 License
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This project is licensed under the MIT License.
