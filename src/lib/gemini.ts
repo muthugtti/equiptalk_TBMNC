@@ -1,19 +1,39 @@
 
-import { GoogleGenerativeAI, SchemaType, FunctionCallingMode } from "@google/generative-ai";
+import { VertexAI, FunctionCallingMode, SchemaType } from "@google-cloud/vertexai";
+import { GoogleAuth } from "google-auth-library";
 
-const apiKey = process.env.GEMINI_API_KEY;
+const project = process.env.GOOGLE_CLOUD_PROJECT_ID ?? process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? 'equiptalk-317d8';
+const location = 'us-central1';
 
-if (!apiKey) {
-    console.warn("GEMINI_API_KEY is not defined in environment variables.");
-}
+const vertexAI = new VertexAI({ project, location });
 
-const genAI = new GoogleGenerativeAI(apiKey || "");
-
-const embeddingModel = genAI.getGenerativeModel({ model: "text-embedding-004" });
+const googleAuth = new GoogleAuth({
+    scopes: ['https://www.googleapis.com/auth/cloud-platform'],
+});
 
 export async function getEmbedding(text: string): Promise<number[]> {
-    const result = await embeddingModel.embedContent(text.slice(0, 10000));
-    return result.embedding.values;
+    const client = await googleAuth.getClient();
+    const token = await client.getAccessToken();
+    const endpoint = `https://${location}-aiplatform.googleapis.com/v1/projects/${project}/locations/${location}/publishers/google/models/text-embedding-004:predict`;
+
+    const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${token.token}`,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            instances: [{ content: text.slice(0, 10000) }],
+        }),
+    });
+
+    if (!res.ok) {
+        const body = await res.text();
+        throw new Error(`Vertex AI embedding error ${res.status}: ${body}`);
+    }
+
+    const data = await res.json();
+    return data.predictions[0].embeddings.values as number[];
 }
 
 export function chunkText(text: string, chunkSize = 1500, overlap = 200): string[] {
@@ -41,8 +61,7 @@ export function cosineSimilarity(a: number[], b: number[]): number {
     return dot / (Math.sqrt(normA) * Math.sqrt(normB));
 }
 
-// Tool definition for creating incidents
-export const incidentTool: any = {
+export const incidentTool = {
     functionDeclarations: [
         {
             name: "create_incident",
@@ -52,16 +71,16 @@ export const incidentTool: any = {
                 properties: {
                     title: {
                         type: SchemaType.STRING,
-                        description: "Short summary of the issue (e.g., 'Engine Overheating', 'Safety Guard Loose')."
+                        description: "Short summary of the issue (e.g., 'Engine Overheating', 'Safety Guard Loose').",
                     },
                     description: {
                         type: SchemaType.STRING,
-                        description: "Detailed description of the problem based on user's input."
+                        description: "Detailed description of the problem based on user's input.",
                     },
                     priority: {
                         type: SchemaType.STRING,
                         enum: ["Low", "Medium", "High", "Critical"],
-                        description: "Assess priority based on safety and urgency. Default to 'Medium'."
+                        description: "Assess priority based on safety and urgency. Default to 'Medium'.",
                     },
                 },
                 required: ["title", "description", "priority"],
@@ -71,7 +90,7 @@ export const incidentTool: any = {
 };
 
 export const getGeminiModel = (systemInstruction?: string) => {
-    return genAI.getGenerativeModel({
+    return vertexAI.getGenerativeModel({
         model: "gemini-2.0-flash",
         systemInstruction: systemInstruction,
         tools: [incidentTool],
@@ -80,7 +99,6 @@ export const getGeminiModel = (systemInstruction?: string) => {
             maxOutputTokens: 8192,
             temperature: 0.7,
             topP: 0.95,
-            topK: 64,
         },
     });
 };

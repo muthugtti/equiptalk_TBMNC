@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getGeminiModel, getEmbedding, cosineSimilarity } from "@/lib/gemini";
 import { getDb } from "@/lib/firebase-admin";
+import type { Part } from "@google-cloud/vertexai";
 
 const TOP_K = 5;
 
@@ -31,9 +32,8 @@ export async function POST(req: NextRequest) {
                 });
 
                 scored.sort((a, b) => b.sim - a.sim);
-                const topChunks = scored.slice(0, TOP_K);
-
-                context = topChunks
+                context = scored
+                    .slice(0, TOP_K)
                     .map(c => `[${c.fileName}]\n${c.text}`)
                     .join("\n\n---\n\n");
             } else {
@@ -62,34 +62,38 @@ Answer questions using ONLY the provided context excerpts below.
 Context:
 ${context || "No documents have been uploaded for this equipment yet."}`;
 
-        // 3. Call Gemini with streaming + function calling
+        // 3. Build chat history in Vertex AI format (Content[])
         const model = getGeminiModel(systemInstruction);
-        const chatHistory = (history ?? []).map((msg: any) => ({
+        const chatHistory = (history ?? []).map((msg: { role: string; message: string }) => ({
             role: msg.role === 'user' ? 'user' : 'model',
-            parts: [{ text: msg.message }]
+            parts: [{ text: msg.message }] as Part[],
         }));
+
         const chat = model.startChat({ history: chatHistory });
-        const initialResult = await chat.sendMessageStream(message);
 
         // 4. Stream response, handle create_incident function call
         const stream = new ReadableStream({
             async start(controller) {
                 const encoder = new TextEncoder();
 
-                async function processStream(resultStream: any) {
-                    let functionCall: any = null;
-                    try {
-                        for await (const chunk of resultStream.stream) {
-                            const text = chunk.text();
-                            if (text) controller.enqueue(encoder.encode(text));
-                            const calls = chunk.functionCalls();
-                            if (calls?.length) functionCall = calls[0];
+                async function processStream(resultStream: Awaited<ReturnType<typeof chat.sendMessageStream>>) {
+                    let functionCall: { name: string; args: Record<string, string> } | null = null;
+                    for await (const item of resultStream.stream) {
+                        const parts = item.candidates?.[0]?.content?.parts ?? [];
+                        for (const part of parts) {
+                            if ('text' in part && part.text) {
+                                controller.enqueue(encoder.encode(part.text));
+                            }
+                            if ('functionCall' in part && part.functionCall) {
+                                functionCall = part.functionCall as { name: string; args: Record<string, string> };
+                            }
                         }
-                    } catch { /* function-call-only chunks throw on .text() — ignore */ }
+                    }
                     return functionCall;
                 }
 
                 try {
+                    const initialResult = await chat.sendMessageStream(message);
                     const call = await processStream(initialResult);
 
                     if (call?.name === "create_incident") {
@@ -100,18 +104,19 @@ ${context || "No documents have been uploaded for this equipment yet."}`;
                             equipmentId,
                             equipmentName,
                             issueDescription: `${call.args.title}: ${call.args.description}`,
-                            priority: (call.args.priority as string)?.toLowerCase() ?? "medium",
+                            priority: call.args.priority?.toLowerCase() ?? "medium",
                             status: "open",
                             source: "AI_CHAT",
                             createdAt: new Date().toISOString(),
                             updatedAt: new Date().toISOString(),
                         });
+
                         const followUp = await chat.sendMessageStream([{
                             functionResponse: {
                                 name: "create_incident",
-                                response: { name: "create_incident", content: { success: true, incidentId: incidentRef.id } }
-                            }
-                        }]);
+                                response: { success: true, incidentId: incidentRef.id },
+                            },
+                        } as Part]);
                         await processStream(followUp);
                     }
 
