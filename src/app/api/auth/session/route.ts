@@ -21,9 +21,11 @@ function clientIp(req: NextRequest): string {
 
 function isAllowedOrigin(req: NextRequest): boolean {
   const origin = req.headers.get("origin");
-  const host = req.headers.get("host");
-  // Same-origin requests (no Origin header, or Origin matches our host)
   if (!origin) return true;
+  // Firebase Hosting CDN rewrites Host to the Cloud Run internal address;
+  // x-forwarded-host carries the original public hostname.
+  const host =
+    req.headers.get("x-forwarded-host") ?? req.headers.get("host");
   try {
     const originHost = new URL(origin).host;
     return originHost === host;
