@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import AccountDrawer from "@/components/dashboard/AccountDrawer";
@@ -16,6 +16,12 @@ export default function DashboardLayout({
     const [loading, setLoading] = useState(true);
     const [mounted, setMounted] = useState(false);
     const [isAccountDrawerOpen, setIsAccountDrawerOpen] = useState(false);
+    // Track whether a user was ever authenticated in this session.
+    // We only redirect on onAuthStateChanged(null) during the initial load
+    // (no session). Once auth is established, sign-out uses a hard navigation
+    // to /api/auth/logout — if we also router.push here we race with that
+    // navigation: the proxy still sees the valid cookie and bounces back.
+    const authEstablished = useRef(false);
 
     useEffect(() => {
         setMounted(true);
@@ -23,10 +29,11 @@ export default function DashboardLayout({
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
-            if (!user) {
-                router.push("/login");
-            } else {
+            if (user) {
+                authEstablished.current = true;
                 setLoading(false);
+            } else if (!authEstablished.current) {
+                router.push("/login");
             }
         });
         return () => unsubscribe();
