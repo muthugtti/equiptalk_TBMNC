@@ -150,6 +150,15 @@ function SortableNode({
                         <span className="material-symbols-outlined text-sm">add</span>
                         Add Child
                     </button>
+                    <button
+                        onPointerDown={e => e.stopPropagation()}
+                        onClick={(e) => { e.stopPropagation(); window.open(`/chat?equipment=${node.id}`, '_blank'); }}
+                        title="Open AI Chat"
+                        className="hidden group-hover:flex items-center gap-1 px-3 py-1.5 rounded-lg text-emerald-700 bg-emerald-50 hover:bg-emerald-100 text-xs font-bold transition-colors"
+                    >
+                        <span className="material-symbols-outlined text-sm">smart_toy</span>
+                        Chat
+                    </button>
                     <span className="material-symbols-outlined text-gray-300 dark:text-gray-600 cursor-grab active:cursor-grabbing">drag_indicator</span>
                 </div>
             </div>

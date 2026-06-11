@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getStorageBucket, getDb } from "@/lib/firebase-admin";
 import { v4 as uuidv4 } from 'uuid';
 import { extractTextFromPdf } from '@/lib/text-extractor';
+import { getEmbedding, chunkText } from '@/lib/gemini';
 
 // Max file size: 10MB
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -59,24 +60,44 @@ export async function POST(req: NextRequest) {
             },
         });
 
-        // Extract and save text for PDFs
+        // Extract, chunk, embed and save text for PDFs
         if (file.type === 'application/pdf') {
             try {
                 const text = await extractTextFromPdf(buffer);
                 if (text) {
                     const db = await getDb();
-                    await db.collection('equipment_docs_text').add({
-                        equipmentId: equipmentId,
+                    const docRef = await db.collection('equipment_docs_text').add({
+                        equipmentId,
                         fileName: file.name,
                         storagePath: filename,
-                        text: text,
+                        text,
                         uploadedAt: new Date().toISOString()
                     });
                     console.log(`[Upload] Extracted ${text.length} chars from ${file.name}`);
+
+                    // Chunk + embed for RAG
+                    const chunks = chunkText(text);
+                    console.log(`[Upload] Embedding ${chunks.length} chunks for RAG`);
+                    const batch = db.batch();
+                    for (let i = 0; i < chunks.length; i++) {
+                        const embedding = await getEmbedding(chunks[i]);
+                        const chunkRef = db.collection('equipment_doc_chunks').doc();
+                        batch.set(chunkRef, {
+                            equipmentId,
+                            docId: docRef.id,
+                            fileName: file.name,
+                            text: chunks[i],
+                            embedding,
+                            chunkIndex: i,
+                            createdAt: new Date().toISOString()
+                        });
+                    }
+                    await batch.commit();
+                    console.log(`[Upload] Stored ${chunks.length} embedded chunks`);
                 }
             } catch (extractError) {
-                console.error("[Upload] Text extraction failed:", extractError);
-                // Continue, don't fail the upload just because extraction failed
+                console.error("[Upload] Text extraction/embedding failed:", extractError);
+                // Don't fail the upload if embedding fails
             }
         }
 

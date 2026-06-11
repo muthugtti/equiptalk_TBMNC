@@ -287,7 +287,6 @@ export default function EquipmentDetailPage({ params }: { params: Promise<{ id: 
             {/* Page Heading */}
             <div className="flex flex-wrap justify-between gap-3 mb-8">
                 <h1 className="text-3xl font-black tracking-tighter min-w-72 text-gray-900 dark:text-white">
-                    {/* Editable Title */}
                     <input
                         type="text"
                         value={formData.name}
@@ -295,6 +294,16 @@ export default function EquipmentDetailPage({ params }: { params: Promise<{ id: 
                         className="bg-transparent border-0 border-b border-transparent hover:border-gray-300 focus:border-primary focus:ring-0 p-0 text-3xl font-black w-full"
                     />
                 </h1>
+                {!isNew && (
+                    <button
+                        onClick={() => window.open(`/chat?equipment=${id}`, '_blank')}
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold transition-colors"
+                    >
+                        <span className="material-symbols-outlined text-base">smart_toy</span>
+                        Open AI Chat
+                        <span className="material-symbols-outlined text-base">open_in_new</span>
+                    </button>
+                )}
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">

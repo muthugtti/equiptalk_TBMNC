@@ -9,6 +9,38 @@ if (!apiKey) {
 
 const genAI = new GoogleGenerativeAI(apiKey || "");
 
+const embeddingModel = genAI.getGenerativeModel({ model: "text-embedding-004" });
+
+export async function getEmbedding(text: string): Promise<number[]> {
+    const result = await embeddingModel.embedContent(text.slice(0, 10000));
+    return result.embedding.values;
+}
+
+export function chunkText(text: string, chunkSize = 1500, overlap = 200): string[] {
+    const chunks: string[] = [];
+    let i = 0;
+    while (i < text.length) {
+        chunks.push(text.slice(i, i + chunkSize));
+        i += chunkSize - overlap;
+        if (i + overlap >= text.length) break;
+    }
+    if (chunks.length === 0 || text.slice(chunks[chunks.length - 1].length) !== '') {
+        const last = text.slice(Math.max(0, text.length - chunkSize));
+        if (chunks.length === 0 || chunks[chunks.length - 1] !== last) chunks.push(last);
+    }
+    return chunks.filter(c => c.trim().length > 0);
+}
+
+export function cosineSimilarity(a: number[], b: number[]): number {
+    let dot = 0, normA = 0, normB = 0;
+    for (let i = 0; i < a.length; i++) {
+        dot += a[i] * b[i];
+        normA += a[i] * a[i];
+        normB += b[i] * b[i];
+    }
+    return dot / (Math.sqrt(normA) * Math.sqrt(normB));
+}
+
 // Tool definition for creating incidents
 export const incidentTool: any = {
     functionDeclarations: [

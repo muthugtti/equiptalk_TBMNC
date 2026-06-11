@@ -1,7 +1,9 @@
 
 import { NextRequest, NextResponse } from "next/server";
-import { getGeminiModel } from "@/lib/gemini";
+import { getGeminiModel, getEmbedding, cosineSimilarity } from "@/lib/gemini";
 import { getDb } from "@/lib/firebase-admin";
+
+const TOP_K = 5;
 
 export async function POST(req: NextRequest) {
     try {
@@ -11,125 +13,111 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Missing equipmentId or message" }, { status: 400 });
         }
 
-        // 1. Fetch Context
         const db = await getDb();
-        const docsSnapshot = await db.collection('equipment_docs_text')
-            .where('equipmentId', '==', equipmentId)
-            .get();
 
+        // 1. RAG: embed the query and find the most relevant chunks
         let context = "";
-        if (!docsSnapshot.empty) {
-            const contextParts = docsSnapshot.docs.map(doc => {
-                const data = doc.data();
-                return `--- Document: ${data.fileName} ---\n${data.text}\n--- End Document ---`;
-            });
-            context = contextParts.join("\n\n");
+        try {
+            const queryEmbedding = await getEmbedding(message);
+            const chunksSnap = await db.collection('equipment_doc_chunks')
+                .where('equipmentId', '==', equipmentId)
+                .get();
+
+            if (!chunksSnap.empty) {
+                const scored = chunksSnap.docs.map(doc => {
+                    const data = doc.data();
+                    const sim = cosineSimilarity(queryEmbedding, data.embedding as number[]);
+                    return { text: data.text as string, fileName: data.fileName as string, sim };
+                });
+
+                scored.sort((a, b) => b.sim - a.sim);
+                const topChunks = scored.slice(0, TOP_K);
+
+                context = topChunks
+                    .map(c => `[${c.fileName}]\n${c.text}`)
+                    .join("\n\n---\n\n");
+            } else {
+                // Fallback: use full extracted text if no chunks exist (legacy docs)
+                const docsSnap = await db.collection('equipment_docs_text')
+                    .where('equipmentId', '==', equipmentId)
+                    .get();
+                if (!docsSnap.empty) {
+                    context = docsSnap.docs
+                        .map(d => `[${d.data().fileName}]\n${(d.data().text as string).slice(0, 3000)}`)
+                        .join("\n\n---\n\n");
+                }
+            }
+        } catch (ragErr) {
+            console.error("[Chat] RAG retrieval failed, continuing without context:", ragErr);
         }
 
-        // 2. Construct Prompt
-        const systemInstruction = `You are an expert technical assistant for the specific equipment identified by ID: ${equipmentId}.
-        
-        Your Goal: Answer the user's questions based ONLY on the provided Technical Documents below.
-        
-        Rules:
-        - If the answer is found in the documents, provide a detailed and accurate response.
-        - If the answer is NOT in the documents, say "I don't have information about that in the uploaded manuals."
-        - Do not hallucinate or provide general knowledge unless it's basic physics/engineering principles to explain a concept found in the docs.
-        - Be concise but helpful.
+        // 2. Build system prompt with retrieved context
+        const systemInstruction = `You are an expert technical assistant for equipment ID: ${equipmentId}.
 
-        Technical Documents:
-        ${context ? context : "No documents available for this equipment."}
-        `;
+Answer questions using ONLY the provided context excerpts below.
+- If the answer is in the context, give a detailed, accurate response.
+- If the answer is NOT in the context, say "I don't have information about that in the uploaded documents."
+- Never hallucinate facts. You may use basic engineering principles to clarify concepts found in the docs.
 
-        // 3. Call Google Generative AI (using gemini.ts)
-        const generativeModel = getGeminiModel(systemInstruction);
+Context:
+${context || "No documents have been uploaded for this equipment yet."}`;
 
-        // Convert simplified history to Gemini format
-        const chatHistory = history ? history.map((msg: any) => ({
+        // 3. Call Gemini with streaming + function calling
+        const model = getGeminiModel(systemInstruction);
+        const chatHistory = (history ?? []).map((msg: any) => ({
             role: msg.role === 'user' ? 'user' : 'model',
             parts: [{ text: msg.message }]
-        })) : [];
-
-        const chat = generativeModel.startChat({
-            history: chatHistory,
-        });
-
+        }));
+        const chat = model.startChat({ history: chatHistory });
         const initialResult = await chat.sendMessageStream(message);
 
-        // 4. Stream Response with Function Calling Support
+        // 4. Stream response, handle create_incident function call
         const stream = new ReadableStream({
             async start(controller) {
                 const encoder = new TextEncoder();
 
                 async function processStream(resultStream: any) {
-                    let functionCall = null;
-
+                    let functionCall: any = null;
                     try {
                         for await (const chunk of resultStream.stream) {
-                            const chunkText = chunk.text();
-                            // Stream text to user immediately
-                            if (chunkText) {
-                                controller.enqueue(encoder.encode(chunkText));
-                            }
-
-                            // Check for function calls
+                            const text = chunk.text();
+                            if (text) controller.enqueue(encoder.encode(text));
                             const calls = chunk.functionCalls();
-                            if (calls && calls.length > 0) {
-                                functionCall = calls[0];
-                            }
+                            if (calls?.length) functionCall = calls[0];
                         }
-                    } catch (e) {
-                        // Sometimes chunk.text() throws if it's purely a function call chunk, ignore safely
-                    }
-
+                    } catch { /* function-call-only chunks throw on .text() — ignore */ }
                     return functionCall;
                 }
 
                 try {
-                    // Process initial response
                     const call = await processStream(initialResult);
 
-                    if (call) {
-                        if (call.name === "create_incident") {
-                            console.log("Creating incident:", call.args);
-
-                            // Write to Firestore
-                            const db = await getDb();
-
-                            // Fetch Equipment Name for schema compliance
-                            const equipDoc = await db.collection("equipment").doc(equipmentId).get();
-                            const equipmentName = equipDoc.exists ? equipDoc.data()?.name || "Unknown Equipment" : "Unknown Equipment";
-
-                            const displayId = `INC-${Date.now()}`;
-
-                            const incidentRef = await db.collection("incidents").add({
-                                displayId,
-                                equipmentId: equipmentId,
-                                equipmentName: equipmentName,
-                                issueDescription: `${call.args.title}: ${call.args.description}`,
-                                priority: call.args.priority?.toLowerCase() || "medium",
-                                status: "open",
-                                createdAt: new Date().toISOString(),
-                                updatedAt: new Date().toISOString(),
-                                source: "AI_CHAT"
-                            });
-
-                            // Send confirmation back to model
-                            const functionResponse = {
-                                functionResponse: {
-                                    name: "create_incident",
-                                    response: { name: "create_incident", content: { success: true, incidentId: incidentRef.id } }
-                                }
-                            };
-
-                            const secondResult = await chat.sendMessageStream([functionResponse]);
-                            await processStream(secondResult);
-                        }
+                    if (call?.name === "create_incident") {
+                        const equipDoc = await db.collection("equipment").doc(equipmentId).get();
+                        const equipmentName = equipDoc.data()?.name ?? "Unknown Equipment";
+                        const incidentRef = await db.collection("incidents").add({
+                            displayId: `INC-${Date.now()}`,
+                            equipmentId,
+                            equipmentName,
+                            issueDescription: `${call.args.title}: ${call.args.description}`,
+                            priority: (call.args.priority as string)?.toLowerCase() ?? "medium",
+                            status: "open",
+                            source: "AI_CHAT",
+                            createdAt: new Date().toISOString(),
+                            updatedAt: new Date().toISOString(),
+                        });
+                        const followUp = await chat.sendMessageStream([{
+                            functionResponse: {
+                                name: "create_incident",
+                                response: { name: "create_incident", content: { success: true, incidentId: incidentRef.id } }
+                            }
+                        }]);
+                        await processStream(followUp);
                     }
 
                     controller.close();
                 } catch (err) {
-                    console.error("Stream Error:", err);
+                    console.error("[Chat] Stream error:", err);
                     controller.error(err);
                 }
             },
@@ -143,7 +131,7 @@ export async function POST(req: NextRequest) {
         });
 
     } catch (error: any) {
-        console.error("Chat API Error:", error);
+        console.error("[Chat] Error:", error);
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }

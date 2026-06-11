@@ -144,11 +144,17 @@ export async function DELETE(
 
         // 6. Delete Database Records (Batch)
         const batch = db.batch();
-        documentsSnapshot.docs.forEach(doc => {
-            batch.delete(doc.ref);
-        });
-        batch.delete(docRef);
+        documentsSnapshot.docs.forEach(doc => batch.delete(doc.ref));
 
+        // Also delete RAG text and chunk records
+        const [textSnap, chunksSnap] = await Promise.all([
+            db.collection('equipment_docs_text').where('equipmentId', '==', id).get(),
+            db.collection('equipment_doc_chunks').where('equipmentId', '==', id).get(),
+        ]);
+        textSnap.docs.forEach(doc => batch.delete(doc.ref));
+        chunksSnap.docs.forEach(doc => batch.delete(doc.ref));
+
+        batch.delete(docRef);
         await batch.commit();
 
         return NextResponse.json({ success: true });
