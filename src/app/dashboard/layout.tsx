@@ -13,13 +13,7 @@ export default function DashboardLayout({
 }) {
     const pathname = usePathname();
     const router = useRouter();
-    const [loading, setLoading] = useState(() => {
-        if (typeof window !== 'undefined' && localStorage.getItem('equiptalk_dev_user') === 'true') {
-            return false;
-        }
-        return true;
-    });
-
+    const [loading, setLoading] = useState(true);
     const [mounted, setMounted] = useState(false);
     const [isAccountDrawerOpen, setIsAccountDrawerOpen] = useState(false);
 
@@ -28,12 +22,6 @@ export default function DashboardLayout({
     }, []);
 
     useEffect(() => {
-        // Dev bypass - already handled in init, but we still need to subscribe if NOT bypassed
-        if (!loading && typeof window !== 'undefined' && localStorage.getItem('equiptalk_dev_user') === 'true') {
-            return;
-        }
-
-
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             if (!user) {
                 router.push("/login");
@@ -41,7 +29,6 @@ export default function DashboardLayout({
                 setLoading(false);
             }
         });
-
         return () => unsubscribe();
     }, [router]);
 
@@ -49,16 +36,12 @@ export default function DashboardLayout({
         return pathname === path || pathname.startsWith(`${path}/`);
     };
 
-    if (loading) {
+    if (loading || !mounted) {
         return (
             <div className="flex h-screen w-full items-center justify-center bg-gray-50 dark:bg-gray-900">
                 <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
             </div>
         );
-    }
-
-    if (!mounted) {
-        return null;
     }
 
     return (

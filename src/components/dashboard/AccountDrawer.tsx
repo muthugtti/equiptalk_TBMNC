@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { auth } from '@/lib/firebase';
 import { onAuthStateChanged, User, signOut } from 'firebase/auth';
+import { useRouter } from 'next/navigation';
 
 interface AccountDrawerProps {
     isOpen: boolean;
@@ -12,6 +13,7 @@ interface AccountDrawerProps {
 export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
     const [appearance, setAppearance] = useState<'dark' | 'light'>('dark');
     const [user, setUser] = useState<User | null>(null);
+    const router = useRouter();
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -21,14 +23,17 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
     }, []);
 
     const handleSignOut = async () => {
+        // Sign out of Firebase client SDK first, then navigate to the
+        // server-side logout route which clears the cookie and redirects.
         try {
             await signOut(auth);
-            onClose(); // Close drawer after sign out (optional, or redirect)
-            // You might want to redirect to login page here if not handled by a protected route wrapper
-            window.location.href = '/login';
-        } catch (error) {
-            console.error("Error signing out:", error);
+        } catch {
+            // Client-side sign-out failed — proceed with server redirect anyway.
         }
+        // Hard navigation to /api/auth/logout: the server clears __session
+        // and issues a 302 to /login in one round-trip, so the proxy never
+        // sees a valid cookie on the destination page.
+        window.location.href = "/api/auth/logout";
     };
 
     if (!isOpen) return null;
