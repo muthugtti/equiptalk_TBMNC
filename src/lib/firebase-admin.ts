@@ -52,7 +52,7 @@ export const getDb = async (): Promise<FirebaseFirestore.Firestore> => {
   return firestoreInstance;
 };
 
-let storageInstance: ReturnType<typeof getStorage>["bucket"] | null = null;
+let storageInstance: ReturnType<ReturnType<typeof getStorage>["bucket"]> | null = null;
 
 export const getStorageBucket = async () => {
   if (storageInstance) return storageInstance;

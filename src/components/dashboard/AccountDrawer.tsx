@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import { auth } from '@/lib/firebase';
 import { onAuthStateChanged, User, signOut } from 'firebase/auth';
-import { useRouter } from 'next/navigation';
 
 interface AccountDrawerProps {
     isOpen: boolean;
@@ -13,7 +12,6 @@ interface AccountDrawerProps {
 export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
     const [appearance, setAppearance] = useState<'dark' | 'light'>('dark');
     const [user, setUser] = useState<User | null>(null);
-    const router = useRouter();
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
