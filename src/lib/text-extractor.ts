@@ -1,4 +1,5 @@
 import { extractText, getDocumentProxy } from "unpdf";
+import mammoth from "mammoth";
 
 /**
  * Extract text from a PDF buffer.
@@ -15,5 +16,21 @@ export async function extractTextFromPdf(buffer: Buffer): Promise<string> {
     } catch (error) {
         console.error("Error parsing PDF:", error);
         throw new Error("Failed to extract text from PDF");
+    }
+}
+
+/**
+ * Extract text from a DOCX (Office Open XML) buffer using `mammoth`.
+ *
+ * `mammoth` reads the modern .docx zip container. It does NOT handle the legacy
+ * binary .doc format — those files are stored but not embedded.
+ */
+export async function extractTextFromDocx(buffer: Buffer): Promise<string> {
+    try {
+        const { value } = await mammoth.extractRawText({ buffer });
+        return value;
+    } catch (error) {
+        console.error("Error parsing DOCX:", error);
+        throw new Error("Failed to extract text from DOCX");
     }
 }

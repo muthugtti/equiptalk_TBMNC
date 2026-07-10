@@ -1,19 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStorageBucket, getDb } from "@/lib/firebase-admin";
 import { v4 as uuidv4 } from 'uuid';
-import { extractTextFromPdf } from '@/lib/text-extractor';
+import { extractTextFromPdf, extractTextFromDocx } from '@/lib/text-extractor';
 import { getEmbedding, chunkText } from '@/lib/gemini';
 import { requireAuth, isEquipmentOwnedBy } from "@/lib/auth";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { invalidateEquipmentCache } from "@/lib/semantic-cache";
+import { validateUpload, resolveExtractionKind } from "@/lib/upload-validation";
 
-// Max file size: 10MB
-const MAX_FILE_SIZE = 10 * 1024 * 1024;
-const ALLOWED_TYPES = [
-    'image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml', // Images
-    'application/pdf', 'text/plain', // Documents
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document' // DOCX
-];
 // Uploads trigger embedding calls and storage writes — cap abuse per user per window.
 const UPLOAD_RATE_LIMIT = { maxAttempts: 20, windowMs: 15 * 60 * 1000, lockoutMs: 5 * 60 * 1000 };
 
@@ -39,20 +33,17 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
         }
 
-        if (file.size > MAX_FILE_SIZE) {
-            return NextResponse.json({ error: "File size exceeds 10MB limit" }, { status: 400 });
+        // Shared, unit-tested validation (see src/lib/upload-validation.ts).
+        const validation = validateUpload({ type: file.type, size: file.size, equipmentId, name: file.name });
+        if (!validation.ok) {
+            return NextResponse.json({ error: validation.error }, { status: validation.status });
         }
-
-        if (!ALLOWED_TYPES.includes(file.type)) {
-            return NextResponse.json({ error: "File type not supported" }, { status: 400 });
-        }
-
+        // validateUpload already rejects a null/empty equipmentId, but that check
+        // lives behind a result object the compiler can't use to narrow the type.
+        // This guard is unreachable at runtime and just tells TS the id is a
+        // string for the ownership check and storage paths below.
         if (!equipmentId) {
             return NextResponse.json({ error: "No equipment ID provided" }, { status: 400 });
-        }
-
-        if (equipmentId === "new") {
-            return NextResponse.json({ error: "Cannot upload files for unsaved equipment. Please save first." }, { status: 400 });
         }
 
         // Don't let a user upload files / RAG chunks against another account's
@@ -83,12 +74,17 @@ export async function POST(req: NextRequest) {
             },
         });
 
-        // Extract, chunk, embed and save text for PDFs and plain text files
-        if (file.type === 'application/pdf' || file.type === 'text/plain') {
+        // Extract, chunk, embed and save text for the document kinds we can read.
+        // Resolve the kind by type OR filename extension so documents rescued by
+        // their extension (empty/generic MIME type) still get indexed for RAG.
+        const extractionKind = resolveExtractionKind({ type: file.type, name: file.name });
+        if (extractionKind) {
             try {
-                const text = file.type === 'application/pdf'
+                const text = extractionKind === 'pdf'
                     ? await extractTextFromPdf(buffer)
-                    : buffer.toString('utf-8');
+                    : extractionKind === 'docx'
+                        ? await extractTextFromDocx(buffer)
+                        : buffer.toString('utf-8');
                 if (text) {
                     const db = await getDb();
                     const docRef = await db.collection('equipment_docs_text').add({
