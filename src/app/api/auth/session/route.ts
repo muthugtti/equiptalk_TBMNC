@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
   const rateLimitKey = `login:${ip}`;
 
   // Pre-check: is this IP already locked out? (read-only, no increment yet)
-  const preCheck = checkRateLimit(rateLimitKey, false);
+  const preCheck = await checkRateLimit(rateLimitKey, false);
   if (!preCheck.allowed) {
     const retryAfterSec = Math.ceil((preCheck.retryAfterMs ?? LOCKOUT_FALLBACK) / 1000);
     return NextResponse.json(
@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
       .createSessionCookie(idToken, { expiresIn: SESSION_DURATION_MS });
 
     // Success — clear the failure counter so a legitimate user isn't penalised.
-    clearRateLimit(rateLimitKey);
+    await clearRateLimit(rateLimitKey);
 
     const res = NextResponse.json({ ok: true });
     res.cookies.set(COOKIE_NAME, sessionCookie, {
@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
     return res;
   } catch (err: any) {
     // Only count failures toward the lockout — valid logins never increment.
-    checkRateLimit(rateLimitKey, true);
+    await checkRateLimit(rateLimitKey, true);
     console.error("[auth/session POST]", err?.message);
     return NextResponse.json({ error: "Authentication failed." }, { status: 401 });
   }

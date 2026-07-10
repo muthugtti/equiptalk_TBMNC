@@ -1,10 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/firebase-admin";
+import { requireAuth } from "@/lib/auth";
+import { v4 as uuidv4 } from "uuid";
+
+const ALLOWED_UPDATE_FIELDS = new Set([
+    'name', 'type', 'model', 'serialNumber', 'status',
+    'parentId', 'order', 'imageUrl', 'imagePrompt', 'notes', 'location', 'manufacturer',
+    // Agent configuration — applied to the chat system prompt / generation.
+    'customInstructions', 'persona', 'responseStyle', 'temperature',
+    // Public access toggle. publicLinkId is NOT here on purpose — it is
+    // server-generated so a client can't set a chosen/guessable token.
+    'isPublicAccessEnabled',
+]);
 
 export async function GET(
     req: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
+    const auth = await requireAuth(req);
+    if (auth instanceof NextResponse) return auth;
+
     try {
         const db = await getDb();
         const { id } = await params;
@@ -15,27 +30,20 @@ export async function GET(
             return NextResponse.json({ error: "Equipment not found" }, { status: 404 });
         }
 
-        // Get documents for this equipment
-        const documentsSnapshot = await db.collection('documents')
-            .where('equipmentId', '==', id)
-            .get();
+        // Ownership scoping: never reveal another account's equipment (or its
+        // documents). Return 404 rather than 403 so foreign ids are indistinguishable
+        // from non-existent ones. Legacy records without createdBy are hidden.
+        if (doc.data()?.createdBy !== auth.uid) {
+            return NextResponse.json({ error: "Equipment not found" }, { status: 404 });
+        }
 
-        const documents = documentsSnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-        }));
+        const documentsSnapshot = await db.collection('documents').where('equipmentId', '==', id).get();
+        const documents = documentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-        return NextResponse.json({
-            id: doc.id,
-            ...doc.data(),
-            documents
-        });
+        return NextResponse.json({ id: doc.id, ...doc.data(), documents });
     } catch (error: any) {
         console.error("Error fetching equipment:", error);
-        return NextResponse.json({
-            error: "Failed to fetch equipment",
-            details: error.message
-        }, { status: 500 });
+        return NextResponse.json({ error: "Failed to fetch equipment" }, { status: 500 });
     }
 }
 
@@ -43,6 +51,9 @@ export async function PUT(
     req: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
+    const auth = await requireAuth(req);
+    if (auth instanceof NextResponse) return auth;
+
     try {
         const db = await getDb();
         const { id } = await params;
@@ -55,24 +66,32 @@ export async function PUT(
             return NextResponse.json({ error: "Equipment not found" }, { status: 404 });
         }
 
-        const updateData = {
-            ...body,
-            updatedAt: new Date().toISOString()
-        };
+        const existingData = doc.data();
+        // Ownership check: if createdBy is set, only the creator may mutate.
+        if (existingData?.createdBy && existingData.createdBy !== auth.uid) {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+
+        // Field allowlist — prevents mass-assignment of internal/immutable fields.
+        const updateData: Record<string, unknown> = { updatedAt: new Date().toISOString() };
+        for (const [key, value] of Object.entries(body)) {
+            if (ALLOWED_UPDATE_FIELDS.has(key)) {
+                updateData[key] = value;
+            }
+        }
+
+        // Legacy equipment created before public links existed won't have a
+        // publicLinkId. Mint one the first time public access is turned on so
+        // the QR code has a stable token to point at.
+        if (updateData.isPublicAccessEnabled === true && !existingData?.publicLinkId) {
+            updateData.publicLinkId = uuidv4();
+        }
 
         await docRef.update(updateData);
-
-        return NextResponse.json({
-            id,
-            ...doc.data(),
-            ...updateData
-        });
+        return NextResponse.json({ id, ...existingData, ...updateData });
     } catch (error: any) {
         console.error("Error updating equipment:", error);
-        return NextResponse.json({
-            error: "Failed to update equipment",
-            details: error.message
-        }, { status: 500 });
+        return NextResponse.json({ error: "Failed to update equipment" }, { status: 500 });
     }
 }
 
@@ -80,36 +99,37 @@ export async function DELETE(
     req: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
+    const auth = await requireAuth(req);
+    if (auth instanceof NextResponse) return auth;
+
     try {
         const db = await getDb();
         const { id } = await params;
 
-        // 1. Get Equipment Data (for Image URL)
         const docRef = db.collection('equipment').doc(id);
         const docSnap = await docRef.get();
 
         if (!docSnap.exists) {
             return NextResponse.json({ error: "Equipment not found" }, { status: 404 });
         }
+
         const equipmentData = docSnap.data();
 
-        // 2. Get Associated Documents
-        const documentsSnapshot = await db.collection('documents')
-            .where('equipmentId', '==', id)
-            .get();
+        // Ownership check.
+        if (equipmentData?.createdBy && equipmentData.createdBy !== auth.uid) {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
 
-        // 3. Initialize Storage
-        // Import dynamically to avoid circular dependecy issues if any, though standard import is fine usually.
+        const documentsSnapshot = await db.collection('documents').where('equipmentId', '==', id).get();
+
         const { getStorageBucket } = await import("@/lib/firebase-admin");
         const bucket = await getStorageBucket();
 
-        // 4. Delete Document Files from Storage
         const fileDeletePromises: Promise<any>[] = [];
 
         documentsSnapshot.docs.forEach(doc => {
             const data = doc.data();
             if (data.filename) {
-                console.log(`[Delete] Scheduling deletion for document file: ${data.filename}`);
                 fileDeletePromises.push(
                     bucket.file(data.filename).delete().catch((e: any) =>
                         console.warn(`Failed to delete document file ${data.filename}:`, e.message)
@@ -118,35 +138,28 @@ export async function DELETE(
             }
         });
 
-        // 5. Delete Main Image from Storage
         if (equipmentData?.imageUrl && equipmentData.imageUrl.includes("firebasestorage.googleapis.com")) {
             try {
-                // Extract path from URL: .../o/equipment%2F[id]%2Ffile.jpg?alt=...
                 const url = new URL(equipmentData.imageUrl);
                 const pathStart = url.pathname.indexOf('/o/');
                 if (pathStart !== -1) {
-                    const encodedPath = url.pathname.substring(pathStart + 3);
-                    const filePath = decodeURIComponent(encodedPath);
-                    console.log(`[Delete] Scheduling deletion for image file: ${filePath}`);
+                    const filePath = decodeURIComponent(url.pathname.substring(pathStart + 3));
                     fileDeletePromises.push(
                         bucket.file(filePath).delete().catch((e: any) =>
-                            console.warn(`Failed to delete image file ${filePath}:`, e.message)
+                            console.warn(`Failed to delete image file:`, e.message)
                         )
                     );
                 }
-            } catch (e) {
-                console.warn("Failed to parse image URL for deletion:", e);
+            } catch {
+                // Ignore URL parse errors.
             }
         }
 
-        // Wait for all file deletions (don't block DB delete on failure, just log)
         await Promise.allSettled(fileDeletePromises);
 
-        // 6. Delete Database Records (Batch)
         const batch = db.batch();
         documentsSnapshot.docs.forEach(doc => batch.delete(doc.ref));
 
-        // Also delete RAG text and chunk records
         const [textSnap, chunksSnap] = await Promise.all([
             db.collection('equipment_docs_text').where('equipmentId', '==', id).get(),
             db.collection('equipment_doc_chunks').where('equipmentId', '==', id).get(),
@@ -160,9 +173,6 @@ export async function DELETE(
         return NextResponse.json({ success: true });
     } catch (error: any) {
         console.error("Error deleting equipment:", error);
-        return NextResponse.json({
-            error: "Failed to delete equipment",
-            details: error.message
-        }, { status: 500 });
+        return NextResponse.json({ error: "Failed to delete equipment" }, { status: 500 });
     }
 }

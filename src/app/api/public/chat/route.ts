@@ -1,13 +1,14 @@
-
 import { NextRequest, NextResponse } from "next/server";
 import { getGeminiModel, getEmbedding, cosineSimilarity, buildSystemInstruction } from "@/lib/gemini";
 import { getDb } from "@/lib/firebase-admin";
-import { requireAuth } from "@/lib/auth";
-import { checkRateLimit } from "@/lib/rate-limit";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { checkSemanticCache, storeSemanticCache } from "@/lib/semantic-cache";
+import { getPublicEquipment, isValidLinkId } from "@/lib/public-equipment";
 
 const TOP_K = 5;
-const CHAT_RATE_LIMIT = { maxAttempts: 30, windowMs: 15 * 60 * 1000, lockoutMs: 5 * 60 * 1000 };
+// Unauthenticated + hits Gemini on every call, so keep this tighter than the
+// authenticated chat limit. Keyed by IP.
+const PUBLIC_CHAT_RATE_LIMIT = { maxAttempts: 30, windowMs: 10 * 60 * 1000, lockoutMs: 10 * 60 * 1000 };
 
 async function withRetry<T>(fn: () => Promise<T>, retries = 2, baseDelayMs = 1500): Promise<T> {
     for (let attempt = 0; ; attempt++) {
@@ -23,11 +24,8 @@ async function withRetry<T>(fn: () => Promise<T>, retries = 2, baseDelayMs = 150
 }
 
 export async function POST(req: NextRequest) {
-    const auth = await requireAuth(req);
-    if (auth instanceof NextResponse) return auth;
-
-    const rateLimitKey = `chat:${auth.uid}`;
-    const rateLimit = await checkRateLimit(rateLimitKey, true, CHAT_RATE_LIMIT);
+    const ip = getClientIp(req);
+    const rateLimit = await checkRateLimit(`public-chat:${ip}`, true, PUBLIC_CHAT_RATE_LIMIT);
     if (!rateLimit.allowed) {
         const retryAfterSec = Math.ceil((rateLimit.retryAfterMs ?? 0) / 1000);
         return NextResponse.json(
@@ -37,64 +35,61 @@ export async function POST(req: NextRequest) {
     }
 
     try {
-        const { equipmentId, message, history } = await req.json();
+        const { linkId, message, history } = await req.json();
 
-        if (!equipmentId || typeof equipmentId !== "string" || !message || typeof message !== "string") {
-            return NextResponse.json({ error: "Missing equipmentId or message" }, { status: 400 });
+        if (!isValidLinkId(linkId) || !message || typeof message !== "string") {
+            return NextResponse.json({ error: "Missing or invalid linkId or message" }, { status: 400 });
         }
 
-        // Validate equipmentId format to prevent prompt injection via interpolation
-        // into the system instruction (see line ~118 below).
-        if (!/^[a-zA-Z0-9_-]{1,128}$/.test(equipmentId)) {
-            return NextResponse.json({ error: "Invalid equipmentId" }, { status: 400 });
+        // Authorize: resolve the equipment by its public token. 404 if the
+        // token is unknown or public access is not enabled.
+        const eq = await getPublicEquipment(linkId);
+        if (!eq) {
+            return NextResponse.json({ error: "This equipment link is not available." }, { status: 404 });
         }
+        const equipmentId = eq.id;
+        const equip = eq.data;
 
         const db = await getDb();
 
-        // Load the equipment's agent configuration (persona, response style,
-        // custom instructions, temperature) so the assistant behaves the way
-        // the owner configured it in the Agent Configuration tab.
-        const equipSnap = await db.collection("equipment").doc(equipmentId).get();
-        const equip = equipSnap.data() ?? {};
-
         db.collection("chat_analytics").add({
             equipmentId,
-            userId: auth.uid,
+            userId: "public",
             question: message.trim(),
             questionNormalized: message.trim().toLowerCase().replace(/\s+/g, " "),
             timestamp: new Date().toISOString(),
-        }).catch((e: any) => console.error("[Chat] Analytics log failed:", e.message));
+        }).catch((e: any) => console.error("[PublicChat] Analytics log failed:", e.message));
 
-        // 1. Embed query once — reused for both semantic cache lookup and RAG retrieval
+        // 1. Embed query once — reused for cache lookup and RAG retrieval
         let queryEmbedding: number[] = [];
         try {
             queryEmbedding = await getEmbedding(message);
         } catch (embErr) {
-            console.error("[Chat] Embedding failed:", embErr);
+            console.error("[PublicChat] Embedding failed:", embErr);
         }
 
-        // 2. Check semantic cache — skip full RAG + Gemini if we have a similar answer
+        // 2. Semantic cache — shares the equipment's namespace with authed chat
         if (queryEmbedding.length > 0) {
             const cached = await checkSemanticCache(equipmentId, queryEmbedding);
             if (cached) {
                 return new NextResponse(cached, {
                     headers: {
-                        'Content-Type': 'text/plain; charset=utf-8',
-                        'X-RAG-Mode': 'cache-hit',
-                        'X-Cache': 'HIT',
+                        "Content-Type": "text/plain; charset=utf-8",
+                        "X-RAG-Mode": "cache-hit",
+                        "X-Cache": "HIT",
                     },
                 });
             }
         }
 
-        // 3. RAG: find the most relevant chunks using the embedding we already have
+        // 3. RAG retrieval
         let context = "";
         let sourceFiles: string[] = [];
         let ragMode = "none";
         try {
             if (queryEmbedding.length > 0) {
-                const chunksSnap = await db.collection('equipment_doc_chunks')
-                    .where('equipmentId', '==', equipmentId)
+                const chunksSnap = await db.collection("equipment_doc_chunks")
+                    .where("equipmentId", "==", equipmentId)
                     .get();
 
                 if (!chunksSnap.empty) {
@@ -103,15 +98,14 @@ export async function POST(req: NextRequest) {
                         const sim = cosineSimilarity(queryEmbedding, data.embedding as number[]);
                         return { text: data.text as string, fileName: data.fileName as string, sim };
                     });
-
                     scored.sort((a, b) => b.sim - a.sim);
                     const topK = scored.slice(0, TOP_K);
                     context = topK.map(c => `[${c.fileName}]\n${c.text}`).join("\n\n---\n\n");
                     sourceFiles = [...new Set(topK.map(c => c.fileName))];
                     ragMode = `chunks:${chunksSnap.size}`;
                 } else {
-                    const docsSnap = await db.collection('equipment_docs_text')
-                        .where('equipmentId', '==', equipmentId)
+                    const docsSnap = await db.collection("equipment_docs_text")
+                        .where("equipmentId", "==", equipmentId)
                         .get();
                     if (!docsSnap.empty) {
                         context = docsSnap.docs
@@ -123,22 +117,21 @@ export async function POST(req: NextRequest) {
                 }
             }
         } catch (ragErr) {
-            console.error("[Chat] RAG retrieval failed, continuing without context:", ragErr);
+            console.error("[PublicChat] RAG retrieval failed, continuing without context:", ragErr);
             ragMode = "error";
         }
 
-        // 4. Build system prompt with retrieved context + per-equipment config
+        // 4. System prompt from the equipment's agent configuration
         const systemInstruction = buildSystemInstruction({
-            equipmentLabel: (equip.name as string) || `equipment ${equipmentId}`,
+            equipmentLabel: (equip.name as string) || "this equipment",
             context,
             persona: equip.persona as string | undefined,
             responseStyle: equip.responseStyle as string | undefined,
             customInstructions: equip.customInstructions as string | undefined,
         });
 
-        // 5. Build chat history
         const chatHistory = (history ?? []).map((msg: { role: string; message: string }) => ({
-            role: msg.role === 'user' ? 'user' : 'model',
+            role: msg.role === "user" ? "user" : "model",
             parts: [{ text: msg.message }],
         }));
 
@@ -146,8 +139,7 @@ export async function POST(req: NextRequest) {
             temperature: typeof equip.temperature === "number" ? equip.temperature : undefined,
         });
 
-        // 6. Stream response, collect for caching, handle create_incident function call
-        let collectedResponse = '';
+        let collectedResponse = "";
         let hadFunctionCall = false;
 
         const stream = new ReadableStream({
@@ -175,15 +167,15 @@ export async function POST(req: NextRequest) {
 
                     if (call?.name === "create_incident") {
                         hadFunctionCall = true;
-                        const equipmentName = (equip.name as string) ?? "Unknown Equipment";
                         const incidentRef = await db.collection("incidents").add({
                             displayId: `INC-${Date.now()}`,
                             equipmentId,
-                            equipmentName,
+                            equipmentName: (equip.name as string) ?? "Unknown Equipment",
                             issueDescription: `${call.args.title}: ${call.args.description}`,
                             priority: call.args.priority?.toLowerCase() ?? "medium",
                             status: "open",
-                            source: "AI_CHAT",
+                            // Reported by an anonymous technician via the public QR link.
+                            source: "AI_CHAT_PUBLIC",
                             createdAt: new Date().toISOString(),
                             updatedAt: new Date().toISOString(),
                         });
@@ -205,16 +197,14 @@ export async function POST(req: NextRequest) {
                         collectedResponse += footer;
                     }
 
-                    // Store in semantic cache — skip if an incident was created to avoid
-                    // replaying stale incident IDs on future cache hits
                     if (!hadFunctionCall && queryEmbedding.length > 0 && collectedResponse) {
                         storeSemanticCache(equipmentId, queryEmbedding, message, collectedResponse)
-                            .catch(e => console.error("[Chat] Cache store failed:", e));
+                            .catch(e => console.error("[PublicChat] Cache store failed:", e));
                     }
 
                     controller.close();
                 } catch (err) {
-                    console.error("[Chat] Stream error:", err);
+                    console.error("[PublicChat] Stream error:", err);
                     const msg = err instanceof Error ? err.message : String(err);
                     const isTransient = /"code":\s*(503|429)|UNAVAILABLE|RESOURCE_EXHAUSTED/.test(msg);
                     const friendly = isTransient
@@ -228,15 +218,14 @@ export async function POST(req: NextRequest) {
 
         return new NextResponse(stream, {
             headers: {
-                'Content-Type': 'text/plain; charset=utf-8',
-                'Transfer-Encoding': 'chunked',
-                'X-RAG-Mode': ragMode,
-                'X-Cache': 'MISS',
+                "Content-Type": "text/plain; charset=utf-8",
+                "Transfer-Encoding": "chunked",
+                "X-RAG-Mode": ragMode,
+                "X-Cache": "MISS",
             },
         });
-
     } catch (error: any) {
-        console.error("[Chat] Error:", error);
+        console.error("[PublicChat] Error:", error);
         return NextResponse.json({ error: "Failed to process chat message" }, { status: 500 });
     }
 }

@@ -551,8 +551,10 @@ export default function EquipmentPage() {
 
                 {/* Content */}
                 {loading ? (
-                    <div className="flex justify-center py-20">
-                        <span className="material-symbols-outlined animate-spin text-primary text-4xl">progress_activity</span>
+                    <div className="space-y-3 animate-pulse">
+                        {[...Array(6)].map((_, i) => (
+                            <div key={i} className="h-16 rounded-xl bg-gray-200 dark:bg-gray-700" />
+                        ))}
                     </div>
                 ) : equipmentList.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20 text-gray-400">

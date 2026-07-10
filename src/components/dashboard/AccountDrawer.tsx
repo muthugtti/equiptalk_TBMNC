@@ -21,17 +21,19 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
     }, []);
 
     const handleSignOut = async () => {
-        // Sign out of Firebase client SDK first, then navigate to the
-        // server-side logout route which clears the cookie and redirects.
         try {
             await signOut(auth);
         } catch {
-            // Client-side sign-out failed — proceed with server redirect anyway.
+            // Best-effort client-side sign-out.
         }
-        // Hard navigation to /api/auth/logout: the server clears __session
-        // and issues a 302 to /login in one round-trip, so the proxy never
-        // sees a valid cookie on the destination page.
-        window.location.href = "/api/auth/logout";
+        try {
+            // POST is CSRF-protected (origin-checked on server).
+            // It clears the cookie and revokes the Firebase refresh token.
+            await fetch("/api/auth/logout", { method: "POST" });
+        } catch {
+            // If the POST fails, proceed with client-side redirect anyway.
+        }
+        window.location.href = "/login";
     };
 
     if (!isOpen) return null;

@@ -3,6 +3,9 @@ import { getStorageBucket, getDb } from "@/lib/firebase-admin";
 import { v4 as uuidv4 } from 'uuid';
 import { extractTextFromPdf } from '@/lib/text-extractor';
 import { getEmbedding, chunkText } from '@/lib/gemini';
+import { requireAuth, isEquipmentOwnedBy } from "@/lib/auth";
+import { checkRateLimit } from "@/lib/rate-limit";
+import { invalidateEquipmentCache } from "@/lib/semantic-cache";
 
 // Max file size: 10MB
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -11,8 +14,22 @@ const ALLOWED_TYPES = [
     'application/pdf', 'text/plain', // Documents
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document' // DOCX
 ];
+// Uploads trigger embedding calls and storage writes — cap abuse per user per window.
+const UPLOAD_RATE_LIMIT = { maxAttempts: 20, windowMs: 15 * 60 * 1000, lockoutMs: 5 * 60 * 1000 };
 
 export async function POST(req: NextRequest) {
+    const auth = await requireAuth(req);
+    if (auth instanceof NextResponse) return auth;
+
+    const rateLimit = await checkRateLimit(`upload:${auth.uid}`, true, UPLOAD_RATE_LIMIT);
+    if (!rateLimit.allowed) {
+        const retryAfterSec = Math.ceil((rateLimit.retryAfterMs ?? 0) / 1000);
+        return NextResponse.json(
+            { error: "Too many uploads. Please slow down." },
+            { status: 429, headers: { "Retry-After": String(retryAfterSec) } }
+        );
+    }
+
     try {
         const formData = await req.formData();
         const file = formData.get("file") as File | null;
@@ -38,6 +55,12 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Cannot upload files for unsaved equipment. Please save first." }, { status: 400 });
         }
 
+        // Don't let a user upload files / RAG chunks against another account's
+        // equipment. Reject foreign or non-existent equipmentIds.
+        if (!(await isEquipmentOwnedBy(equipmentId, auth.uid))) {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+
         const bucket = await getStorageBucket();
         const buffer = Buffer.from(await file.arrayBuffer());
 
@@ -60,30 +83,35 @@ export async function POST(req: NextRequest) {
             },
         });
 
-        // Extract, chunk, embed and save text for PDFs
-        if (file.type === 'application/pdf') {
+        // Extract, chunk, embed and save text for PDFs and plain text files
+        if (file.type === 'application/pdf' || file.type === 'text/plain') {
             try {
-                const text = await extractTextFromPdf(buffer);
+                const text = file.type === 'application/pdf'
+                    ? await extractTextFromPdf(buffer)
+                    : buffer.toString('utf-8');
                 if (text) {
                     const db = await getDb();
                     const docRef = await db.collection('equipment_docs_text').add({
                         equipmentId,
+                        createdBy: auth.uid,
                         fileName: file.name,
                         storagePath: filename,
                         text,
                         uploadedAt: new Date().toISOString()
                     });
-                    console.log(`[Upload] Extracted ${text.length} chars from ${file.name}`);
-
-                    // Chunk + embed for RAG
+                    // Chunk + embed for RAG (committed in small batches to stay under
+                    // Firestore's per-request size limit, since embedding vectors are large)
                     const chunks = chunkText(text);
-                    console.log(`[Upload] Embedding ${chunks.length} chunks for RAG`);
-                    const batch = db.batch();
+                    const BATCH_SIZE = 20;
+                    let batch = db.batch();
+                    let opsInBatch = 0;
                     for (let i = 0; i < chunks.length; i++) {
+                        if (i > 0) await new Promise(r => setTimeout(r, 200));
                         const embedding = await getEmbedding(chunks[i]);
                         const chunkRef = db.collection('equipment_doc_chunks').doc();
                         batch.set(chunkRef, {
                             equipmentId,
+                            createdBy: auth.uid,
                             docId: docRef.id,
                             fileName: file.name,
                             text: chunks[i],
@@ -91,9 +119,18 @@ export async function POST(req: NextRequest) {
                             chunkIndex: i,
                             createdAt: new Date().toISOString()
                         });
+                        opsInBatch++;
+                        if (opsInBatch === BATCH_SIZE) {
+                            await batch.commit();
+                            batch = db.batch();
+                            opsInBatch = 0;
+                        }
                     }
-                    await batch.commit();
-                    console.log(`[Upload] Stored ${chunks.length} embedded chunks`);
+                    if (opsInBatch > 0) await batch.commit();
+                    // New document changes what the AI knows — invalidate cached answers
+                    invalidateEquipmentCache(equipmentId).catch(e =>
+                        console.error("[Upload] Cache invalidation failed:", e)
+                    );
                 }
             } catch (extractError) {
                 console.error("[Upload] Text extraction/embedding failed:", extractError);
@@ -114,9 +151,6 @@ export async function POST(req: NextRequest) {
 
     } catch (error: any) {
         console.error("Error uploading file:", error);
-        return NextResponse.json({
-            error: `Upload failed: ${error.message}`,
-            details: error.stack
-        }, { status: 500 });
+        return NextResponse.json({ error: "Upload failed" }, { status: 500 });
     }
 }

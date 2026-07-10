@@ -1,0 +1,22 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // All legitimate data access flows through the Next.js API routes,
+    // which use the Firebase Admin SDK (bypasses these rules).
+    // Direct client-side SDK access is not part of the app's design and
+    // must be denied by default to close the bypass vector.
+
+    // Allow users to read and write only their own chat session documents.
+    // The /api/chat-sessions route uses Admin SDK, but this rule provides
+    // a defence-in-depth layer in case client-side access is ever introduced.
+    match /users/{userId}/chatSessions/{sessionId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Deny all other direct client-side access.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

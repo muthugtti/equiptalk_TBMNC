@@ -206,11 +206,17 @@ export default function IncidentsPage() {
                         </thead>
                         <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                             {loading ? (
-                                <tr>
-                                    <td colSpan={7} className="px-6 py-10 text-center text-gray-500">
-                                        Loading incidents...
-                                    </td>
-                                </tr>
+                                <>
+                                    {[...Array(5)].map((_, i) => (
+                                        <tr key={i} className="animate-pulse">
+                                            {[...Array(7)].map((__, j) => (
+                                                <td key={j} className="px-6 py-4">
+                                                    <div className="h-4 rounded bg-gray-200 dark:bg-gray-700" />
+                                                </td>
+                                            ))}
+                                        </tr>
+                                    ))}
+                                </>
                             ) : filteredIncidents.length === 0 ? (
                                 <tr>
                                     <td colSpan={7} className="px-6 py-10 text-center text-gray-500">

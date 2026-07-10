@@ -45,8 +45,24 @@ export default function DashboardLayout({
 
     if (loading || !mounted) {
         return (
-            <div className="flex h-screen w-full items-center justify-center bg-gray-50 dark:bg-gray-900">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+            <div className="flex h-screen w-full flex-col bg-gray-50 dark:bg-gray-900 animate-pulse">
+                <div className="h-14 w-full bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700" />
+                <div className="flex flex-1 overflow-hidden">
+                    <div className="hidden md:flex w-56 flex-col gap-3 p-4 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700">
+                        {[...Array(5)].map((_, i) => (
+                            <div key={i} className="h-9 rounded-lg bg-gray-100 dark:bg-gray-700" />
+                        ))}
+                    </div>
+                    <div className="flex-1 p-8 space-y-4">
+                        <div className="h-8 w-48 rounded-lg bg-gray-200 dark:bg-gray-700" />
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                            {[...Array(4)].map((_, i) => (
+                                <div key={i} className="h-24 rounded-xl bg-gray-200 dark:bg-gray-700" />
+                            ))}
+                        </div>
+                        <div className="h-64 rounded-xl bg-gray-200 dark:bg-gray-700" />
+                    </div>
+                </div>
             </div>
         );
     }

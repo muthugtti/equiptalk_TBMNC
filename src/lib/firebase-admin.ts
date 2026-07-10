@@ -12,8 +12,9 @@ function buildCredential() {
         json.startsWith("{") ? json : Buffer.from(json, "base64").toString("utf8")
       );
       return admin.credential.cert(parsed);
-    } catch (e) {
-      console.error("[Firebase Admin] Failed to parse FIREBASE_SERVICE_ACCOUNT_JSON:", e);
+    } catch {
+      // Do not log the parse error — it may echo partial key material.
+      console.error("[Firebase Admin] Failed to parse service account credential. Check FIREBASE_SERVICE_ACCOUNT_JSON format.");
     }
   }
 
@@ -28,8 +29,11 @@ export async function initAdmin() {
   const projectId =
     process.env.GOOGLE_CLOUD_PROJECT_ID ??
     process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ??
-    process.env.FIREBASE_PROJECT_ID ??
-    "equiptalk-317d8";
+    process.env.FIREBASE_PROJECT_ID;
+
+  if (!projectId) {
+    throw new Error("[Firebase Admin] No project ID configured. Set GOOGLE_CLOUD_PROJECT_ID.");
+  }
 
   const storageBucket =
     process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ?? "equiptalk-317d8.firebasestorage.app";

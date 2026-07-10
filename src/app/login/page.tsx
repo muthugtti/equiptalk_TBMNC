@@ -64,7 +64,8 @@ function LoginForm() {
   const [lockoutMs, setLockoutMs] = useState(0);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get("from") || "/dashboard";
+  const raw = searchParams.get("from");
+  const redirectTo = (raw && raw.startsWith("/") && !raw.includes("://")) ? raw : "/dashboard";
 
   useEffect(() => {
     const { locked, remainingMs } = getClientLockout();
@@ -86,7 +87,7 @@ function LoginForm() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isLocked) return;
+    if (loading || isLocked) return;
 
     setLoading(true);
     setError(null);

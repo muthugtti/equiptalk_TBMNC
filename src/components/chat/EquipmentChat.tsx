@@ -91,7 +91,7 @@ export default function EquipmentChat({ equipmentId }: EquipmentChatProps) {
                     <h3 className="font-semibold text-gray-800 dark:text-gray-100">Equipment Assistant</h3>
                 </div>
                 <div className="text-xs text-xs text-gray-500 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
-                    Gemini 1.5 Flash
+                    Gemini 2.0 Flash
                 </div>
             </div>
 
@@ -109,9 +109,10 @@ export default function EquipmentChat({ equipmentId }: EquipmentChatProps) {
                 ))}
 
                 {isLoading && messages[messages.length - 1]?.speaker === 'User' && (
-                    <div className="flex justify-start w-full animate-pulse">
-                        <div className="bg-gray-200 dark:bg-gray-700 rounded-2xl rounded-bl-none px-5 py-3 text-gray-500 text-sm">
-                            Thinking...
+                    <div className="flex justify-start w-full">
+                        <div className="bg-gray-200 dark:bg-gray-700 rounded-2xl rounded-bl-none px-5 py-4 space-y-2 animate-pulse w-48">
+                            <div className="h-3 rounded bg-gray-300 dark:bg-gray-600 w-full" />
+                            <div className="h-3 rounded bg-gray-300 dark:bg-gray-600 w-3/4" />
                         </div>
                     </div>
                 )}

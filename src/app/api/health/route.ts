@@ -5,39 +5,26 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
     try {
-        console.log("Health check called");
-
-        // Initialize check
-        const checks: any = {
-            projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID
-        };
-
-        // Try to perform a simple Firestore operation
+        let connected = false;
         try {
             const db = await getDb();
-            checks.firestoreRef = !!db;
-            const collections = await db.listCollections();
-            checks.connection = "success";
-            checks.collections = collections.map(c => c.id);
+            // Cheapest possible read just to confirm Firestore is reachable —
+            // avoid listCollections(), which enumerates schema to any caller.
+            await db.collection('equipment').limit(1).get();
+            connected = true;
         } catch (dbError: any) {
-            checks.connection = "failed";
-            checks.dbError = dbError.message;
+            console.error("Health check DB error:", dbError.message);
         }
 
-        return NextResponse.json({
-            status: checks.connection === "success" ? "online" : "partial_outage",
-            checks,
-            env: {
-                nodeEnv: process.env.NODE_ENV,
+        return NextResponse.json(
+            { status: connected ? "online" : "partial_outage" },
+            {
+                status: connected ? 200 : 503,
+                headers: { "Cache-Control": "no-store, max-age=0" },
             }
-        });
+        );
     } catch (error: any) {
         console.error("Health check fatal error:", error);
-        return NextResponse.json({
-            status: "error",
-            error: String(error),
-            details: error.message,
-            stack: error.stack
-        }, { status: 500 });
+        return NextResponse.json({ status: "error" }, { status: 500 });
     }
 }

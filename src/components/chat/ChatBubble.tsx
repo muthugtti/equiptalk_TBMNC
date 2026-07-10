@@ -1,5 +1,8 @@
 
 import React from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { markdownComponents } from './markdownComponents';
 
 export interface ChatMessage {
     id: string;
@@ -28,7 +31,13 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({ message }) => {
                 <div className="font-medium mb-1 text-xs opacity-80 uppercase tracking-wide">
                     {isUser ? 'You' : 'EquipTalk AI'}
                 </div>
-                <div className="whitespace-pre-wrap">{message.text}</div>
+                {isUser ? (
+                    <div className="whitespace-pre-wrap">{message.text}</div>
+                ) : (
+                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                        {message.text}
+                    </ReactMarkdown>
+                )}
             </div>
         </div>
     );

@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const PROTECTED = ["/dashboard"];
+const PROTECTED = ["/dashboard", "/chat"];
 const PUBLIC_AUTH = ["/login", "/signup", "/forgot-password"];
 
-// Lightweight JWT expiry check — no crypto, Edge-safe.
-// Full signature verification happens in API routes via firebase-admin.
+// UX-ONLY guard: decodes the JWT payload WITHOUT verifying the signature.
+// Purpose: avoid a redirect flash for obviously-expired sessions.
+// This is NOT a security gate. Firebase Hosting's CDN bypasses this middleware
+// for static pages entirely. All real auth enforcement is in API routes via requireAuth().
 function isSessionExpired(cookie: string): boolean {
   try {
     const payload = cookie.split(".")[1];
@@ -47,5 +49,5 @@ export function proxy(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/dashboard/:path*", "/login", "/signup", "/forgot-password"],
+  matcher: ["/", "/dashboard/:path*", "/chat", "/login", "/signup", "/forgot-password"],
 };

@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import EquipmentChat from "@/components/chat/EquipmentChat";
+import QRCodeCard from "@/components/equipment/QRCodeCard";
 
 export default function EquipmentDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
@@ -17,6 +18,7 @@ export default function EquipmentDetailPage({ params }: { params: Promise<{ id: 
     const [loading, setLoading] = useState(!isNew);
     const [saving, setSaving] = useState(false);
     const [activeTab, setActiveTab] = useState("knowledge");
+    const [origin, setOrigin] = useState("");
 
     // Default form data
     const [formData, setFormData] = useState({
@@ -34,17 +36,17 @@ export default function EquipmentDetailPage({ params }: { params: Promise<{ id: 
         llmModel: "GPT-4 Turbo",
         temperature: 0.2,
         // Public Access Fields
-        publicLinkId: "eq-" + Math.random().toString(36).substring(2, 12), // Mock default for now
+        publicLinkId: "",
         isPublicAccessEnabled: false,
         documents: [] as any[],
         imageUrl: ""
     });
 
     useEffect(() => {
+        setOrigin(window.location.origin);
         if (!isNew) {
             fetchEquipmentDetails();
         } else {
-            // Basic defaults for new item to match design feel
             setFormData(prev => ({ ...prev, name: "New Equipment" }));
         }
     }, [id]);
@@ -67,7 +69,7 @@ export default function EquipmentDetailPage({ params }: { params: Promise<{ id: 
                     customInstructions: data.customInstructions || "You are an expert on this equipment. Assist users with operation and troubleshooting.",
                     llmModel: data.llmModel || "GPT-4 Turbo",
                     temperature: data.temperature !== undefined ? data.temperature : 0.2,
-                    publicLinkId: data.publicLinkId || "eq-" + Math.random().toString(36).substring(2, 12),
+                    publicLinkId: data.publicLinkId || "",
                     isPublicAccessEnabled: data.isPublicAccessEnabled || false,
                     documents: data.documents || [],
                     imageUrl: data.imageUrl || ""
@@ -206,6 +208,37 @@ export default function EquipmentDetailPage({ params }: { params: Promise<{ id: 
         }
     };
 
+    // Toggle public access (persists immediately; server mints a publicLinkId
+    // the first time it's enabled on legacy equipment).
+    const handleTogglePublicAccess = async (enabled: boolean) => {
+        setFormData(prev => ({ ...prev, isPublicAccessEnabled: enabled }));
+        setSaving(true);
+        try {
+            const res = await fetch(`/api/equipment/${id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ isPublicAccessEnabled: enabled }),
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setFormData(prev => ({
+                    ...prev,
+                    isPublicAccessEnabled: enabled,
+                    publicLinkId: data.publicLinkId ?? prev.publicLinkId,
+                }));
+            } else {
+                // Revert on failure
+                setFormData(prev => ({ ...prev, isPublicAccessEnabled: !enabled }));
+                alert("Failed to update public access. Please try again.");
+            }
+        } catch {
+            setFormData(prev => ({ ...prev, isPublicAccessEnabled: !enabled }));
+            alert("Failed to update public access. Please try again.");
+        } finally {
+            setSaving(false);
+        }
+    };
+
     // Delete Modal State
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [deleteConfirmationText, setDeleteConfirmationText] = useState("");
@@ -267,9 +300,25 @@ export default function EquipmentDetailPage({ params }: { params: Promise<{ id: 
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center min-h-screen bg-background-light dark:bg-background-dark">
-                <span className="material-symbols-outlined animate-spin text-4xl text-primary">progress_activity</span>
-            </div>
+            <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-screen animate-pulse">
+                <div className="flex gap-2 mb-6">
+                    <div className="h-4 w-20 rounded bg-gray-200 dark:bg-gray-700" />
+                    <div className="h-4 w-4 rounded bg-gray-200 dark:bg-gray-700" />
+                    <div className="h-4 w-32 rounded bg-gray-200 dark:bg-gray-700" />
+                    <div className="h-4 w-4 rounded bg-gray-200 dark:bg-gray-700" />
+                    <div className="h-4 w-40 rounded bg-gray-200 dark:bg-gray-700" />
+                </div>
+                <div className="h-9 w-64 rounded-lg bg-gray-200 dark:bg-gray-700 mb-6" />
+                <div className="flex gap-2 mb-6">
+                    {[...Array(5)].map((_, i) => (
+                        <div key={i} className="h-9 w-24 rounded-lg bg-gray-200 dark:bg-gray-700" />
+                    ))}
+                </div>
+                <div className="space-y-4">
+                    <div className="h-48 rounded-xl bg-gray-200 dark:bg-gray-700" />
+                    <div className="h-32 rounded-xl bg-gray-200 dark:bg-gray-700" />
+                </div>
+            </main>
         );
     }
 
@@ -556,15 +605,11 @@ export default function EquipmentDetailPage({ params }: { params: Promise<{ id: 
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                             <div>
                                                 <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">LLM Model</label>
-                                                <select
-                                                    value={formData.llmModel}
-                                                    onChange={(e) => setFormData({ ...formData, llmModel: e.target.value })}
-                                                    className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:outline-none px-4 py-2.5"
-                                                >
-                                                    <option>GPT-4 Turbo</option>
-                                                    <option>Claude 3 Opus</option>
-                                                    <option>Gemini 1.5 Pro</option>
-                                                </select>
+                                                <div className="w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/60 text-gray-900 dark:text-white px-4 py-2.5 flex items-center gap-2">
+                                                    <span className="material-symbols-outlined text-base text-primary">bolt</span>
+                                                    Gemini 2.5 Flash
+                                                </div>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">All equipment assistants run on Gemini 2.5 Flash with RAG over your uploaded documents.</p>
                                             </div>
                                             <div>
                                                 <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Creativity (Temperature)</label>
@@ -601,90 +646,51 @@ export default function EquipmentDetailPage({ params }: { params: Promise<{ id: 
                             {activeTab === 'access' && (
                                 <div className="space-y-8">
                                     <div>
-                                        <h3 className="text-xl font-bold text-gray-900 dark:text-white">Share Public Link</h3>
-                                        <p className="text-gray-500 dark:text-gray-400 mt-1">Generate a unique link and QR code to provide public access to the equipment's AI agent.</p>
+                                        <h3 className="text-xl font-bold text-gray-900 dark:text-white">Share & QR Code</h3>
+                                        <p className="text-gray-500 dark:text-gray-400 mt-1">
+                                            Turn on public access to generate a QR code. Print it and stick it on the machine — anyone who scans it can chat with this equipment&apos;s AI, no login required.
+                                        </p>
                                     </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
-                                        <div className="md:col-span-2 space-y-4">
-                                            <div>
-                                                <label className="font-semibold text-sm text-gray-900 dark:text-white">Unique Public Link</label>
-                                                <div className="mt-2 flex items-center gap-2">
-                                                    <input
-                                                        type="text"
-                                                        value={`https://app.equipmanager.com/public/${formData.publicLinkId}`}
-                                                        readOnly
-                                                        className="w-full flex-grow rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:border-primary focus:ring-primary px-4 py-2.5"
-                                                    />
-                                                    <button
-                                                        onClick={() => navigator.clipboard.writeText(`https://app.equipmanager.com/public/${formData.publicLinkId}`)}
-                                                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
-                                                        title="Copy link"
-                                                    >
-                                                        <span className="material-symbols-outlined text-xl">content_copy</span>
-                                                    </button>
+
+                                    {isNew ? (
+                                        <div className="rounded-lg border border-dashed border-gray-300 dark:border-gray-600 p-6 text-center text-sm text-gray-500">
+                                            Save the equipment first to enable public access.
+                                        </div>
+                                    ) : (
+                                        <>
+                                            {/* Public access toggle */}
+                                            <div className="flex items-center justify-between rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+                                                <div className="pr-4">
+                                                    <p className="font-semibold text-gray-900 dark:text-white">Public Access</p>
+                                                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                                                        When on, anyone who scans the QR can chat with the AI about this equipment — without an account.
+                                                    </p>
                                                 </div>
-                                            </div>
-                                            <div className="flex flex-wrap gap-2 pt-2">
                                                 <button
-                                                    onClick={() => setFormData({ ...formData, publicLinkId: "eq-" + Math.random().toString(36).substring(2, 12) })}
-                                                    className="flex cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-lg h-10 px-4 bg-primary/20 dark:bg-primary/30 text-primary text-sm font-bold tracking-wide hover:bg-primary/30 dark:hover:bg-primary/40"
+                                                    type="button"
+                                                    role="switch"
+                                                    aria-checked={formData.isPublicAccessEnabled}
+                                                    disabled={saving}
+                                                    onClick={() => handleTogglePublicAccess(!formData.isPublicAccessEnabled)}
+                                                    className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors disabled:opacity-60 ${formData.isPublicAccessEnabled ? "bg-emerald-600" : "bg-gray-300 dark:bg-gray-600"}`}
                                                 >
-                                                    <span className="material-symbols-outlined text-xl">refresh</span>
-                                                    <span>Regenerate Link</span>
-                                                </button>
-                                                <button className="flex cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-lg h-10 px-4 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white text-sm font-bold tracking-wide hover:bg-gray-300 dark:hover:bg-gray-600">
-                                                    <span className="material-symbols-outlined text-xl">download</span>
-                                                    <span>Download QR Code</span>
+                                                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${formData.isPublicAccessEnabled ? "translate-x-6" : "translate-x-1"}`} />
                                                 </button>
                                             </div>
-                                        </div>
 
-                                        <div className="flex flex-col items-center justify-center text-center">
-                                            <div className="bg-white p-3 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
-                                                {/* Mock QR Code */}
-                                                <img
-                                                    alt="QR code"
-                                                    className="h-32 w-32"
-                                                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuC5CrheVVBObA7Z7Ys0U1Z8qR9rV9-46xgbehp2J4tTp8rY7VUZKuTbIBpj3TaFPF9WDddfvP5Zowzp5B-CH_WS_IS18z0DaGx6a-oE0OazaIoYYw8OY3Z7WGtAZgvgoVu91MuGdQe9tuF6WcphTTzWl-shSoT6YV1gZpM3i0KH1NAQ7UDJ3uHcteSfg6GcK9wo85jcQ3QiEe2bgmIKfAYhjIAeW6_9zh7nIOnit4hvKFdmuCumqEH5-X6DS9EzflRmFMa99mufMoaA"
-                                                />
-                                            </div>
-                                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Scan to access the agent</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
-                                        <h3 className="text-xl font-bold text-gray-900 dark:text-white">Permissions</h3>
-                                        <p className="text-gray-500 dark:text-gray-400 mt-1">Control who can access this public link.</p>
-
-                                        <div className="mt-4 space-y-4">
-                                            <div className="flex items-center justify-between p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-                                                <div>
-                                                    <h4 className="font-semibold text-gray-900 dark:text-white">Enable Public Access</h4>
-                                                    <p className="text-sm text-gray-500 dark:text-gray-400">Anyone with the link can interact with the agent.</p>
+                                            {formData.isPublicAccessEnabled ? (
+                                                formData.publicLinkId && origin ? (
+                                                    <QRCodeCard chatUrl={`${origin}/p/${formData.publicLinkId}`} equipmentName={formData.name} />
+                                                ) : (
+                                                    <div className="h-32 rounded-xl bg-gray-100 dark:bg-gray-700 animate-pulse" />
+                                                )
+                                            ) : (
+                                                <div className="rounded-lg border border-dashed border-gray-300 dark:border-gray-600 p-6 text-center text-sm text-gray-500">
+                                                    Public access is off. Turn it on to generate a scannable QR code.
                                                 </div>
-                                                <label className="relative inline-flex cursor-pointer items-center">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={formData.isPublicAccessEnabled}
-                                                        onChange={(e) => setFormData({ ...formData, isPublicAccessEnabled: e.target.checked })}
-                                                        className="peer sr-only"
-                                                    />
-                                                    <div className="peer h-6 w-11 rounded-full bg-gray-200 dark:bg-gray-700 after:absolute after:top-[2px] after:left-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-primary peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/30"></div>
-                                                </label>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex justify-end pt-4">
-                                        <button
-                                            onClick={handleSave}
-                                            disabled={saving}
-                                            className="flex min-w-[180px] cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-lg h-11 px-6 bg-primary text-white text-sm font-bold tracking-wide hover:bg-primary/90 disabled:opacity-70"
-                                        >
-                                            <span className="material-symbols-outlined text-xl">save</span>
-                                            <span className="truncate">{saving ? "Saving..." : "Save Configuration"}</span>
-                                        </button>
-                                    </div>
+                                            )}
+                                        </>
+                                    )}
                                 </div>
                             )}
 
@@ -779,7 +785,6 @@ function DeleteModal({
                         disabled={confirmationText !== "DELETE" || isDeleting}
                         className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-bold"
                     >
-                        {isDeleting && <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>}
                         {isDeleting ? "Deleting..." : "Delete Forever"}
                     </button>
                 </div>
