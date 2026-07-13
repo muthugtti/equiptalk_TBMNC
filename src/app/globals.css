@@ -2,17 +2,23 @@
 @plugin "@tailwindcss/forms";
 @plugin "@tailwindcss/container-queries";
 
+/* Class-based dark mode: `dark:` utilities activate when <html> has the
+   `.dark` class, which is toggled by ThemeProvider / the pre-hydration script
+   in the root layout. This overrides Tailwind v4's default media-query dark
+   variant so the in-app Appearance toggle is authoritative. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background-light: #f6f7f8;
   --background-dark: #101922;
   --primary: #137fec;
   --foreground: #171717;
+  /* color-scheme is set dynamically on <html> by the theme script so native
+     controls (inputs, scrollbars) match the active theme. */
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground: #ededed;
-  }
+.dark {
+  --foreground: #ededed;
 }
 
 @theme inline {

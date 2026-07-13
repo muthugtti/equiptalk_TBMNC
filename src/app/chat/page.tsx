@@ -55,6 +55,7 @@ function ChatInterface() {
     const [sessionId, setSessionId] = useState<string | null>(null);
     const [sessions, setSessions] = useState<SessionSummary[]>([]);
     const [showHistory, setShowHistory] = useState(false);
+    const [suggestions, setSuggestions] = useState<string[] | null>(null);
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
@@ -117,9 +118,31 @@ function ChatInterface() {
             .finally(() => setLoadingHistory(false));
     }, [authChecked, equipmentId]);
 
+    // Load document-specific starter questions for this equipment. The API
+    // derives them from the uploaded docs (cached server-side); if none are
+    // available yet — no upload, or generation failed — we fall back to the
+    // generic prompts below.
+    useEffect(() => {
+        if (!authChecked || !equipmentId) return;
+        let cancelled = false;
+        fetch(`/api/suggested-questions?equipmentId=${encodeURIComponent(equipmentId)}`)
+            .then(r => r.ok ? r.json() : null)
+            .then(data => {
+                if (!cancelled && data?.questions?.length) setSuggestions(data.questions);
+            })
+            .catch(() => {});
+        return () => { cancelled = true; };
+    }, [authChecked, equipmentId]);
+
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
+
+    const GENERIC_SUGGESTIONS = [
+        "What are the maintenance intervals?",
+        "How do I troubleshoot errors?",
+        "What are the safety precautions?",
+    ];
 
     function saveSession(finalMessages: Message[]) {
         const payload = finalMessages.map(m => ({ role: m.role, text: m.text }));
@@ -372,7 +395,11 @@ function ChatInterface() {
                     </div>
                 </header>
 
-                <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4">
+                <div className="flex-1 overflow-y-auto px-4 py-6">
+                  {/* Constrain the message column to the same width as the input
+                      below so they align. Full-width on mobile (< max-w-3xl),
+                      centered readable column on desktop. */}
+                  <div className="mx-auto w-full max-w-3xl min-h-full space-y-4">
                     {loadingHistory && messages.length === 0 ? (
                         <div className="space-y-4 animate-pulse">
                             {[...Array(4)].map((_, i) => (
@@ -393,7 +420,7 @@ function ChatInterface() {
                                 Ask anything about this equipment. I'll search the uploaded manuals and documents to give you accurate answers.
                             </p>
                             <div className="mt-6 flex flex-wrap gap-2 justify-center">
-                                {["What are the maintenance intervals?", "How do I troubleshoot errors?", "What are the safety precautions?"].map(q => (
+                                {(suggestions ?? GENERIC_SUGGESTIONS).map(q => (
                                     <button
                                         key={q}
                                         onClick={() => { setInput(q); inputRef.current?.focus(); }}
@@ -436,6 +463,7 @@ function ChatInterface() {
                     ))}
 
                     <div ref={messagesEndRef} />
+                  </div>
                 </div>
 
                 <div className="flex-shrink-0 bg-white border-t border-gray-200 px-4 py-4">
@@ -448,7 +476,7 @@ function ChatInterface() {
                             onKeyDown={e => e.key === "Enter" && !e.shiftKey && handleSend()}
                             placeholder={`Ask about ${equipment?.name ?? "this equipment"}…`}
                             disabled={isLoading}
-                            className="flex-1 bg-gray-100 border-0 rounded-full px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
+                            className="flex-1 bg-gray-100 dark:bg-gray-800 border-0 rounded-full px-5 py-3 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
                         />
                         <button
                             onClick={handleSend}

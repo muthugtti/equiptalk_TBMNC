@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { auth } from '@/lib/firebase';
 import { onAuthStateChanged, User, signOut } from 'firebase/auth';
+import { useTheme } from '@/components/ThemeProvider';
 
 interface AccountDrawerProps {
     isOpen: boolean;
@@ -10,7 +12,8 @@ interface AccountDrawerProps {
 }
 
 export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
-    const [appearance, setAppearance] = useState<'dark' | 'light'>('dark');
+    const router = useRouter();
+    const { theme: appearance, setTheme } = useTheme();
     const [user, setUser] = useState<User | null>(null);
 
     useEffect(() => {
@@ -36,6 +39,11 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
         window.location.href = "/login";
     };
 
+    const handleMyAccount = () => {
+        onClose();
+        router.push("/dashboard/account");
+    };
+
     if (!isOpen) return null;
 
     return (
@@ -47,7 +55,7 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
             ></div>
 
             {/* Drawer Panel */}
-            <div className="relative w-full max-w-sm bg-white shadow-2xl animate-in slide-in-from-right duration-300">
+            <div className="relative w-full max-w-sm bg-white dark:bg-gray-900 shadow-2xl animate-in slide-in-from-right duration-300">
 
                 {/* Header */}
                 <div className="relative h-32 bg-[#1a1f37] rounded-bl-[2rem] rounded-br-[2rem]">
@@ -75,32 +83,35 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
 
                     {/* User Info */}
                     <div className="mb-6">
-                        <h2 className="text-xl font-bold text-gray-900">{user?.displayName || "Guest User"}</h2>
-                        <div className="flex items-center justify-center gap-2 mt-1 text-gray-500 text-sm font-medium">
+                        <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">{user?.displayName || "Guest User"}</h2>
+                        <div className="flex items-center justify-center gap-2 mt-1 text-gray-500 dark:text-gray-400 text-sm font-medium">
                             <span className="material-symbols-outlined text-lg">work</span>
                             <span>Equiptalk - User</span>
                         </div>
-                        <div className="flex items-center justify-center gap-2 mt-1 text-gray-500 text-sm cursor-pointer hover:text-primary transition-colors">
+                        <div className="flex items-center justify-center gap-2 mt-1 text-gray-500 dark:text-gray-400 text-sm cursor-pointer hover:text-primary transition-colors">
                             <span>{user?.email || "No email"}</span>
                             <span className="material-symbols-outlined text-base">content_copy</span>
                         </div>
                     </div>
 
                     {/* IDs Section */}
-                    <div className="flex items-center justify-between border-t border-b border-gray-100 py-4 mb-6">
-                        <div className="flex-1 text-center border-r border-gray-100 px-2">
-                            <p className="text-xs text-gray-500 mb-1">Equiptalk User ID</p>
-                            <p className="font-bold text-gray-900 text-sm">823229538</p>
+                    <div className="flex items-center justify-between border-t border-b border-gray-100 dark:border-gray-700 py-4 mb-6">
+                        <div className="flex-1 text-center border-r border-gray-100 dark:border-gray-700 px-2">
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Equiptalk User ID</p>
+                            <p className="font-bold text-gray-900 dark:text-gray-100 text-sm">823229538</p>
                         </div>
                         <div className="flex-1 text-center px-2">
-                            <p className="text-xs text-gray-500 mb-1">Organization ID</p>
-                            <p className="font-bold text-gray-900 text-sm">774056691</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Organization ID</p>
+                            <p className="font-bold text-gray-900 dark:text-gray-100 text-sm">774056691</p>
                         </div>
                     </div>
 
                     {/* Actions Row */}
-                    <div className="flex items-center justify-between border-b border-gray-100 pb-6 mb-6">
-                        <button className="flex-1 flex items-center justify-center gap-2 text-primary font-medium text-sm hover:underline border-r border-gray-100">
+                    <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-700 pb-6 mb-6">
+                        <button
+                            onClick={handleMyAccount}
+                            className="flex-1 flex items-center justify-center gap-2 text-primary font-medium text-sm hover:underline border-r border-gray-100 dark:border-gray-700"
+                        >
                             <span className="material-symbols-outlined text-xl">person</span>
                             My Account
                         </button>
@@ -114,9 +125,9 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
                     </div>
 
                     {/* Subscription */}
-                    <div className="border border-dashed border-gray-200 rounded-lg p-4 mb-6 text-left">
+                    <div className="border border-dashed border-gray-200 dark:border-gray-700 rounded-lg p-4 mb-6 text-left">
                         <div className="flex items-center justify-between mb-2">
-                            <span className="text-sm font-bold text-gray-900">Plan : Enterprise</span>
+                            <span className="text-sm font-bold text-gray-900 dark:text-gray-100">Plan : Enterprise</span>
                         </div>
                         <button className="text-sm text-primary font-medium hover:underline">
                             Manage Subscription
@@ -125,12 +136,12 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
 
                     {/* Appearance */}
                     <div className="text-left">
-                        <p className="text-sm font-bold text-gray-900 mb-3">Appearance</p>
+                        <p className="text-sm font-bold text-gray-900 dark:text-gray-100 mb-3">Appearance</p>
                         <div className="flex gap-4">
                             {/* Dark Mode Option */}
                             <button
-                                onClick={() => setAppearance('dark')}
-                                className={`flex-1 flex flex-col gap-2 p-2 rounded-lg border-2 transition-all ${appearance === 'dark' ? 'border-primary bg-blue-50/50' : 'border-gray-200 hover:border-gray-300'}`}
+                                onClick={() => setTheme('dark')}
+                                className={`flex-1 flex flex-col gap-2 p-2 rounded-lg border-2 transition-all ${appearance === 'dark' ? 'border-primary bg-blue-50/50 dark:bg-primary/10' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'}`}
                             >
                                 <div className="w-full aspect-video bg-[#1a1f37] rounded border border-gray-700 relative overflow-hidden">
                                     {/* Simple visual representation of dark mode side menu */}
@@ -140,14 +151,14 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
                                     <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${appearance === 'dark' ? 'border-primary bg-primary' : 'border-gray-400'}`}>
                                         {appearance === 'dark' && <div className="w-2 h-2 rounded-full bg-white"></div>}
                                     </div>
-                                    <span className="text-xs font-medium text-gray-900">Dark</span>
+                                    <span className="text-xs font-medium text-gray-900 dark:text-gray-100">Dark</span>
                                 </div>
                             </button>
 
                             {/* Light Mode Option */}
                             <button
-                                onClick={() => setAppearance('light')}
-                                className={`flex-1 flex flex-col gap-2 p-2 rounded-lg border-2 transition-all ${appearance === 'light' ? 'border-primary bg-blue-50/50' : 'border-gray-200 hover:border-gray-300'}`}
+                                onClick={() => setTheme('light')}
+                                className={`flex-1 flex flex-col gap-2 p-2 rounded-lg border-2 transition-all ${appearance === 'light' ? 'border-primary bg-blue-50/50 dark:bg-primary/10' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'}`}
                             >
                                 <div className="w-full aspect-video bg-white rounded border border-gray-200 relative overflow-hidden">
                                     {/* Simple visual representation of light mode side menu */}
@@ -157,7 +168,7 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
                                     <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${appearance === 'light' ? 'border-primary bg-primary' : 'border-gray-400'}`}>
                                         {appearance === 'light' && <div className="w-2 h-2 rounded-full bg-white"></div>}
                                     </div>
-                                    <span className="text-xs font-medium text-gray-900">Light</span>
+                                    <span className="text-xs font-medium text-gray-900 dark:text-gray-100">Light</span>
                                 </div>
                             </button>
                         </div>
