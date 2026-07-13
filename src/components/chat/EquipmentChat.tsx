@@ -1,6 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { ChatBubble, ChatMessage } from './ChatBubble';
+import { typeStream } from '@/lib/stream-typewriter';
 
 interface EquipmentChatProps {
     equipmentId: string;
@@ -54,21 +55,11 @@ export default function EquipmentChat({ equipmentId }: EquipmentChatProps) {
             const botMessageId = (Date.now() + 1).toString();
             setMessages(prev => [...prev, { id: botMessageId, speaker: 'Bot', text: '' }]);
 
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-            let botText = '';
-
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-
-                const chunk = decoder.decode(value, { stream: true });
-                botText += chunk;
-
+            await typeStream(response, text =>
                 setMessages(prev => prev.map(msg =>
-                    msg.id === botMessageId ? { ...msg, text: botText } : msg
-                ));
-            }
+                    msg.id === botMessageId ? { ...msg, text } : msg
+                ))
+            );
 
         } catch (error) {
             console.error("Chat error:", error);

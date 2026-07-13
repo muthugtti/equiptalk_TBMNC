@@ -226,6 +226,10 @@ export async function POST(req: NextRequest) {
             headers: {
                 "Content-Type": "text/plain; charset=utf-8",
                 "Transfer-Encoding": "chunked",
+                // Disable proxy/CDN response buffering so streamed tokens reach
+                // the client incrementally instead of in one batch.
+                "X-Accel-Buffering": "no",
+                "Cache-Control": "no-cache, no-transform",
                 "X-RAG-Mode": ragMode,
                 "X-Cache": "MISS",
             },

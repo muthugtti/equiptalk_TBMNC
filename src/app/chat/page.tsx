@@ -8,6 +8,7 @@ import remarkGfm from "remark-gfm";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { markdownComponents } from "@/components/chat/markdownComponents";
+import { typeStream } from "@/lib/stream-typewriter";
 
 interface Message {
     id: string;
@@ -232,16 +233,9 @@ function ChatInterface() {
 
             if (!res.ok || !res.body) throw new Error(res.statusText);
 
-            const reader = res.body.getReader();
-            const decoder = new TextDecoder();
-            let botText = "";
-
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-                botText += decoder.decode(value, { stream: true });
-                setMessages(prev => prev.map(m => m.id === botId ? { ...m, text: botText } : m));
-            }
+            const botText = await typeStream(res, text =>
+                setMessages(prev => prev.map(m => m.id === botId ? { ...m, text } : m))
+            );
 
             saveSession([...newMessages, { id: botId, role: "bot", text: botText }]);
         } catch {

@@ -7,6 +7,7 @@ import { auth } from "@/lib/firebase";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { markdownComponents } from "@/components/chat/markdownComponents";
+import { typeStream } from "@/lib/stream-typewriter";
 
 interface Message {
     id: string;
@@ -107,15 +108,9 @@ export default function PublicChatPage({ params }: { params: Promise<{ linkId: s
             if (res.status === 401) { router.replace(loginHref); return; }
             if (!res.ok || !res.body) throw new Error(res.statusText);
 
-            const reader = res.body.getReader();
-            const decoder = new TextDecoder();
-            let botText = "";
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-                botText += decoder.decode(value, { stream: true });
-                setMessages(prev => prev.map(m => m.id === botId ? { ...m, text: botText } : m));
-            }
+            await typeStream(res, text =>
+                setMessages(prev => prev.map(m => m.id === botId ? { ...m, text } : m))
+            );
         } catch {
             setMessages(prev =>
                 prev.map(m => m.id === botId
