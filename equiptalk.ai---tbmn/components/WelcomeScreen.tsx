@@ -23,20 +23,20 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onSuggestionClick 
             <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-3 ml-1 uppercase tracking-wider">Suggested Queries</p>
             <ul className="space-y-2">
               <li>
-                <button onClick={() => onSuggestionClick("What defects are common in coating?")} className="w-full text-left flex items-center justify-between p-2.5 rounded-lg hover:bg-white dark:hover:bg-surface-dark border border-transparent hover:border-gray-200 dark:hover:border-gray-600 transition-all group">
-                  <span className="text-sm text-gray-700 dark:text-gray-300">What defects are common in coating?</span>
+                <button onClick={() => onSuggestionClick("What defects can occur during slot-die coating?")} className="w-full text-left flex items-center justify-between p-2.5 rounded-lg hover:bg-white dark:hover:bg-surface-dark border border-transparent hover:border-gray-200 dark:hover:border-gray-600 transition-all group">
+                  <span className="text-sm text-gray-700 dark:text-gray-300">What defects can occur during slot-die coating?</span>
                   <span className="material-icons-outlined text-xs text-gray-400 group-hover:text-primary transition-colors">arrow_forward</span>
                 </button>
               </li>
               <li>
-                <button onClick={() => onSuggestionClick("Why is vacuum drying necessary?")} className="w-full text-left flex items-center justify-between p-2.5 rounded-lg hover:bg-white dark:hover:bg-surface-dark border border-transparent hover:border-gray-200 dark:hover:border-gray-600 transition-all group">
-                  <span className="text-sm text-gray-700 dark:text-gray-300">Why is vacuum drying necessary?</span>
+                <button onClick={() => onSuggestionClick("Why must slit electrode edges be burr-free?")} className="w-full text-left flex items-center justify-between p-2.5 rounded-lg hover:bg-white dark:hover:bg-surface-dark border border-transparent hover:border-gray-200 dark:hover:border-gray-600 transition-all group">
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Why must slit electrode edges be burr-free?</span>
                   <span className="material-icons-outlined text-xs text-gray-400 group-hover:text-primary transition-colors">arrow_forward</span>
                 </button>
               </li>
               <li>
-                <button onClick={() => onSuggestionClick("Explain the purpose of calendering")} className="w-full text-left flex items-center justify-between p-2.5 rounded-lg hover:bg-white dark:hover:bg-surface-dark border border-transparent hover:border-gray-200 dark:hover:border-gray-600 transition-all group">
-                  <span className="text-sm text-gray-700 dark:text-gray-300">Explain the purpose of calendering</span>
+                <button onClick={() => onSuggestionClick("What moisture target must vacuum drying reach before cell assembly?")} className="w-full text-left flex items-center justify-between p-2.5 rounded-lg hover:bg-white dark:hover:bg-surface-dark border border-transparent hover:border-gray-200 dark:hover:border-gray-600 transition-all group">
+                  <span className="text-sm text-gray-700 dark:text-gray-300">What moisture target must vacuum drying reach before cell assembly?</span>
                   <span className="material-icons-outlined text-xs text-gray-400 group-hover:text-primary transition-colors">arrow_forward</span>
                 </button>
               </li>

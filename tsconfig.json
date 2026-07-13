@@ -39,6 +39,7 @@
   "exclude": [
     "node_modules",
     "equiptalk.ai---tbmn",
-    "stitch_equipment_management_dashboard"
+    "stitch_equipment_management_dashboard",
+    "tests"
   ]
 }

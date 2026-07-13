@@ -42,3 +42,6 @@ yarn-error.log*
 # firebase
 .firebase/
 firebase-debug.log*
+
+# TestSprite MCP config (contains API key)
+.mcp.json
