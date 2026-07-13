@@ -1,6 +1,9 @@
 "use client";
 
 import { useState, useRef, useEffect, use } from "react";
+import { useRouter } from "next/navigation";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { markdownComponents } from "@/components/chat/markdownComponents";
@@ -20,7 +23,10 @@ interface PublicEquipmentInfo {
 
 export default function PublicChatPage({ params }: { params: Promise<{ linkId: string }> }) {
     const { linkId } = use(params);
+    const router = useRouter();
+    const loginHref = `/login?from=${encodeURIComponent(`/p/${linkId}`)}`;
 
+    const [authChecked, setAuthChecked] = useState(false);
     const [equipment, setEquipment] = useState<PublicEquipmentInfo | null>(null);
     const [loadingEquipment, setLoadingEquipment] = useState(true);
     const [notAvailable, setNotAvailable] = useState(false);
@@ -31,11 +37,30 @@ export default function PublicChatPage({ params }: { params: Promise<{ linkId: s
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
-    // Load public equipment info (no auth). 404 => link disabled/unknown.
+    // Demo launch: QR/Open Chat is behind login. Redirect anonymous visitors to
+    // the login page (with a return path) before loading any equipment data.
+    // This backstops the middleware for the CDN-bypass edge case.
     useEffect(() => {
+        const unsub = onAuthStateChanged(auth, user => {
+            if (!user) {
+                router.replace(loginHref);
+            } else {
+                setAuthChecked(true);
+            }
+        });
+        return () => unsub();
+    }, [loginHref, router]);
+
+    // Load equipment info once the user is confirmed logged in. 404 => disabled/unknown.
+    useEffect(() => {
+        if (!authChecked) return;
         let cancelled = false;
         fetch(`/api/public/equipment?linkId=${encodeURIComponent(linkId)}`)
             .then(async r => {
+                // Session cookie can expire while the Firebase client still
+                // reports a signed-in user. Send them back to login rather than
+                // the misleading "link not available" screen.
+                if (r.status === 401) { if (!cancelled) router.replace(loginHref); return null; }
                 if (!r.ok) { if (!cancelled) setNotAvailable(true); return null; }
                 return r.json();
             })
@@ -43,7 +68,7 @@ export default function PublicChatPage({ params }: { params: Promise<{ linkId: s
             .catch(() => { if (!cancelled) setNotAvailable(true); })
             .finally(() => { if (!cancelled) setLoadingEquipment(false); });
         return () => { cancelled = true; };
-    }, [linkId]);
+    }, [linkId, authChecked, loginHref, router]);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -79,6 +104,7 @@ export default function PublicChatPage({ params }: { params: Promise<{ linkId: s
                 body: JSON.stringify({ linkId, message: userMsg.text, history }),
             });
 
+            if (res.status === 401) { router.replace(loginHref); return; }
             if (!res.ok || !res.body) throw new Error(res.statusText);
 
             const reader = res.body.getReader();
@@ -155,7 +181,11 @@ export default function PublicChatPage({ params }: { params: Promise<{ linkId: s
                     <span className="text-xs text-gray-400 hidden sm:inline">AI Assistant</span>
                 </header>
 
-                <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4">
+                <div className="flex-1 overflow-y-auto px-4 py-6">
+                  {/* Constrain the message column to the same width as the input
+                      below so they align. Full-width on mobile (< max-w-3xl),
+                      centered readable column on desktop. */}
+                  <div className="mx-auto w-full max-w-3xl min-h-full space-y-4">
                     {messages.length === 0 && !isLoading ? (
                         <div className="flex flex-col items-center justify-center h-full text-center pb-20">
                             <div className="w-16 h-16 rounded-2xl bg-[#1a1f37] flex items-center justify-center mb-4">
@@ -208,6 +238,7 @@ export default function PublicChatPage({ params }: { params: Promise<{ linkId: s
                         </div>
                     ))}
                     <div ref={messagesEndRef} />
+                  </div>
                 </div>
 
                 <div className="flex-shrink-0 bg-white border-t border-gray-200 px-4 py-4">
@@ -220,7 +251,7 @@ export default function PublicChatPage({ params }: { params: Promise<{ linkId: s
                             onKeyDown={e => e.key === "Enter" && !e.shiftKey && handleSend()}
                             placeholder={`Ask about ${equipment.name}…`}
                             disabled={isLoading}
-                            className="flex-1 bg-gray-100 border-0 rounded-full px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
+                            className="flex-1 bg-gray-100 border-0 rounded-full px-5 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
                         />
                         <button
                             onClick={handleSend}

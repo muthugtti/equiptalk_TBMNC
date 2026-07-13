@@ -4,6 +4,7 @@ import { getDb } from "@/lib/firebase-admin";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { checkSemanticCache, storeSemanticCache } from "@/lib/semantic-cache";
 import { getPublicEquipment, isValidLinkId } from "@/lib/public-equipment";
+import { requireAuth } from "@/lib/auth";
 
 const TOP_K = 5;
 // Unauthenticated + hits Gemini on every call, so keep this tighter than the
@@ -33,6 +34,11 @@ export async function POST(req: NextRequest) {
             { status: 429, headers: { "Retry-After": String(retryAfterSec) } }
         );
     }
+
+    // Demo launch: the QR/Open Chat flow is gated behind login. This is the real
+    // security boundary — anonymous callers are rejected before any Gemini spend.
+    const auth = await requireAuth(req);
+    if (auth instanceof NextResponse) return auth;
 
     try {
         const { linkId, message, history } = await req.json();

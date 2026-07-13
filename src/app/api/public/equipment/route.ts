@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPublicEquipment, isValidLinkId } from "@/lib/public-equipment";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
+import { requireAuth } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +17,11 @@ export async function GET(req: NextRequest) {
             { status: 429, headers: { "Retry-After": String(Math.ceil((rl.retryAfterMs ?? 0) / 1000)) } }
         );
     }
+
+    // Demo launch: QR/Open Chat is gated behind login. Enforce auth server-side
+    // so the endpoint isn't reachable anonymously even if hit directly.
+    const auth = await requireAuth(req);
+    if (auth instanceof NextResponse) return auth;
 
     const linkId = new URL(req.url).searchParams.get("linkId");
     if (!isValidLinkId(linkId)) {

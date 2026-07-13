@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const PROTECTED = ["/dashboard", "/chat"];
+// `/p/[linkId]` (the QR/Open Chat public page) is gated behind login for the
+// demo launch. It is a dynamic SSR route, so this middleware actually runs for
+// it (unlike CDN-prerendered static pages). The API layer is the real boundary.
+const PROTECTED = ["/dashboard", "/chat", "/p/"];
 const PUBLIC_AUTH = ["/login", "/signup", "/forgot-password"];
 
 // UX-ONLY guard: decodes the JWT payload WITHOUT verifying the signature.
@@ -49,5 +52,5 @@ export function proxy(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/dashboard/:path*", "/chat", "/login", "/signup", "/forgot-password"],
+  matcher: ["/", "/dashboard/:path*", "/chat", "/p/:path*", "/login", "/signup", "/forgot-password"],
 };
