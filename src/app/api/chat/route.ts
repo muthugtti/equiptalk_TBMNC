@@ -55,6 +55,17 @@ export async function POST(req: NextRequest) {
         // custom instructions, temperature) so the assistant behaves the way
         // the owner configured it in the Agent Configuration tab.
         const equipSnap = await db.collection("equipment").doc(equipmentId).get();
+
+        // Ownership scoping: a user may only chat against their OWN equipment.
+        // Without this, any authenticated account could pass a foreign equipmentId
+        // and exfiltrate that equipment's RAG document chunks, agent config, and
+        // create incidents / analytics against it. Return 404 (not 403) so foreign
+        // ids are indistinguishable from non-existent ones, matching
+        // GET /api/equipment/[id]. Legacy records without createdBy are treated as
+        // not-owned (strict scoping), consistent with isEquipmentOwnedBy().
+        if (!equipSnap.exists || equipSnap.data()?.createdBy !== auth.uid) {
+            return NextResponse.json({ error: "Equipment not found" }, { status: 404 });
+        }
         const equip = equipSnap.data() ?? {};
 
         db.collection("chat_analytics").add({
