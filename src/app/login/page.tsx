@@ -6,6 +6,9 @@ import { auth } from "@/lib/firebase";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Suspense } from "react";
+import { requestSession, startMfaEnroll } from "@/lib/auth-client";
+import { MfaChallenge } from "@/components/auth/MfaChallenge";
+import { MfaSetup } from "@/components/auth/MfaSetup";
 
 const LOCKOUT_KEY = "equiptalk_lockout";
 const MAX_CLIENT_ATTEMPTS = 5;
@@ -62,6 +65,11 @@ function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [lockoutMs, setLockoutMs] = useState(0);
+  // Second-factor flow: after a correct password we either ask for a code
+  // ("otp") or walk a first-time user through authenticator setup ("enroll").
+  const [step, setStep] = useState<"credentials" | "otp" | "enroll">("credentials");
+  const [pendingIdToken, setPendingIdToken] = useState("");
+  const [enrollData, setEnrollData] = useState<{ otpauthUrl: string; secret: string } | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
   const raw = searchParams.get("from");
@@ -95,28 +103,41 @@ function LoginForm() {
     try {
       const credential = await signInWithEmailAndPassword(auth, email, password);
       const idToken = await credential.user.getIdToken();
+      setPendingIdToken(idToken);
 
-      const res = await fetch("/api/auth/session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idToken }),
-      });
+      // Password verified — the server decides whether a code is needed or the
+      // user must enroll first. No session cookie is issued until a code passes.
+      const result = await requestSession(idToken);
 
-      if (res.status === 429) {
-        const retryAfter = res.headers.get("Retry-After");
-        const secs = retryAfter ? parseInt(retryAfter, 10) : 900;
-        setError(`Too many attempts. Try again in ${Math.ceil(secs / 60)} minute(s).`);
+      if (result.status === "ok") {
+        router.push(redirectTo);
+        return;
+      }
+      if (result.status === "rate_limited") {
+        setError(`Too many attempts. Try again in ${Math.ceil(result.retryAfterSec / 60)} minute(s).`);
         setLoading(false);
         return;
       }
-
-      if (!res.ok) {
-        setError("Sign in failed. Please try again.");
+      if (result.status === "otp_required") {
+        setStep("otp");
         setLoading(false);
         return;
       }
-
-      router.push(redirectTo);
+      if (result.status === "enroll_required") {
+        const enroll = await startMfaEnroll(idToken);
+        if (!enroll.ok) {
+          setError(enroll.message);
+          setLoading(false);
+          return;
+        }
+        setEnrollData({ otpauthUrl: enroll.otpauthUrl, secret: enroll.secret });
+        setStep("enroll");
+        setLoading(false);
+        return;
+      }
+      setError("message" in result ? result.message : "Sign in failed. Please try again.");
+      setLoading(false);
+      return;
     } catch (err) {
       const code = (err as AuthError).code ?? "";
       incrementClientFailures();
@@ -162,6 +183,17 @@ function LoginForm() {
         {/* Right Panel: Form */}
         <div className="flex flex-1 flex-col justify-center items-center py-10 px-4 sm:px-6 lg:px-8 bg-background-light dark:bg-background-dark">
           <div className="w-full max-w-md space-y-8">
+            {step === "otp" ? (
+              <MfaChallenge idToken={pendingIdToken} onComplete={() => router.push(redirectTo)} />
+            ) : step === "enroll" && enrollData ? (
+              <MfaSetup
+                idToken={pendingIdToken}
+                otpauthUrl={enrollData.otpauthUrl}
+                secret={enrollData.secret}
+                onComplete={() => router.push(redirectTo)}
+              />
+            ) : (
+              <>
             {/* Tabs */}
             <div className="flex border-b border-gray-200 dark:border-gray-700 gap-8">
               <span className="flex flex-col items-center justify-center border-b-[3px] border-b-primary text-gray-900 dark:text-white pb-[13px] pt-4">
@@ -275,6 +307,8 @@ function LoginForm() {
                 </Link>
               </div>
             </form>
+              </>
+            )}
           </div>
         </div>
       </div>

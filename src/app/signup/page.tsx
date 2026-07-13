@@ -10,6 +10,10 @@ import {
 import { auth, googleProvider } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { evaluatePassword, isPasswordValid } from "@/lib/password-policy";
+import { requestSession, startMfaEnroll } from "@/lib/auth-client";
+import { MfaChallenge } from "@/components/auth/MfaChallenge";
+import { MfaSetup } from "@/components/auth/MfaSetup";
 
 function friendlySignupError(code: string): string {
   switch (code) {
@@ -24,36 +28,69 @@ function friendlySignupError(code: string): string {
   }
 }
 
-async function createSession(idToken: string): Promise<boolean> {
-  try {
-    const res = await fetch("/api/auth/session", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ idToken }),
-    });
-    return res.ok;
-  } catch {
-    return false;
-  }
-}
-
 export default function SignupPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [passwordFocused, setPasswordFocused] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  // Two-factor is required for everyone, so a brand-new account goes straight
+  // into authenticator setup after it's created.
+  const [step, setStep] = useState<"credentials" | "otp" | "enroll">("credentials");
+  const [pendingIdToken, setPendingIdToken] = useState("");
+  const [enrollData, setEnrollData] = useState<{ otpauthUrl: string; secret: string } | null>(null);
   const router = useRouter();
+
+  // Shared branch after any successful Firebase auth (email or Google): decide
+  // whether to enroll a new authenticator or challenge for a code. No session
+  // cookie exists until the code is verified server-side.
+  const proceedWithSession = async (idToken: string) => {
+    setPendingIdToken(idToken);
+    const result = await requestSession(idToken);
+    if (result.status === "ok") {
+      router.push("/dashboard");
+      return;
+    }
+    if (result.status === "rate_limited") {
+      setError(`Too many attempts. Try again in ${Math.ceil(result.retryAfterSec / 60)} minute(s).`);
+      setLoading(false);
+      return;
+    }
+    if (result.status === "otp_required") {
+      setStep("otp");
+      setLoading(false);
+      return;
+    }
+    if (result.status === "enroll_required") {
+      const enroll = await startMfaEnroll(idToken);
+      if (!enroll.ok) {
+        setError(enroll.message);
+        setLoading(false);
+        return;
+      }
+      setEnrollData({ otpauthUrl: enroll.otpauthUrl, secret: enroll.secret });
+      setStep("enroll");
+      setLoading(false);
+      return;
+    }
+    setError("message" in result ? result.message : "Sign in failed. Please try again.");
+    setLoading(false);
+  };
+
+  const passwordChecks = evaluatePassword(password);
+  // Show the checklist once the user starts (or has focused) the field.
+  const showPasswordChecklist = passwordFocused || password.length > 0;
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters.");
+    if (!isPasswordValid(password)) {
+      setError("Please meet all the password requirements below.");
       setLoading(false);
       return;
     }
@@ -68,12 +105,7 @@ export default function SignupPage() {
       const credential = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(credential.user, { displayName: name });
       const idToken = await credential.user.getIdToken();
-      const ok = await createSession(idToken);
-      if (!ok) {
-        setError("Account created but sign-in failed. Please sign in manually.");
-        return;
-      }
-      router.push("/dashboard");
+      await proceedWithSession(idToken);
     } catch (err) {
       const code = (err as AuthError).code ?? "";
       setError(friendlySignupError(code));
@@ -88,12 +120,7 @@ export default function SignupPage() {
     try {
       const credential = await signInWithPopup(auth, googleProvider);
       const idToken = await credential.user.getIdToken();
-      const ok = await createSession(idToken);
-      if (!ok) {
-        setError("Google sign-in succeeded but session creation failed. Please try again.");
-        return;
-      }
-      router.push("/dashboard");
+      await proceedWithSession(idToken);
     } catch (err) {
       const code = (err as AuthError).code ?? "";
       if (code !== "auth/popup-closed-by-user" && code !== "auth/cancelled-popup-request") {
@@ -134,6 +161,17 @@ export default function SignupPage() {
         {/* Right Panel: Form */}
         <div className="flex flex-1 flex-col justify-center items-center py-10 px-4 sm:px-6 lg:px-8 bg-background-light dark:bg-background-dark">
           <div className="w-full max-w-md space-y-8">
+            {step === "otp" ? (
+              <MfaChallenge idToken={pendingIdToken} onComplete={() => router.push("/dashboard")} />
+            ) : step === "enroll" && enrollData ? (
+              <MfaSetup
+                idToken={pendingIdToken}
+                otpauthUrl={enrollData.otpauthUrl}
+                secret={enrollData.secret}
+                onComplete={() => router.push("/dashboard")}
+              />
+            ) : (
+              <>
             {/* Tabs */}
             <div className="flex border-b border-gray-200 dark:border-gray-700 gap-8">
               <Link
@@ -219,6 +257,9 @@ export default function SignupPage() {
                       minLength={8}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
+                      onFocus={() => setPasswordFocused(true)}
+                      onBlur={() => setPasswordFocused(false)}
+                      aria-describedby="password-requirements"
                       placeholder="At least 8 characters"
                       className="flex w-full rounded-lg text-gray-900 dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-gray-300 dark:border-gray-600 bg-background-light dark:bg-gray-800/50 h-12 p-4 rounded-r-none border-r-0 text-sm font-normal"
                     />
@@ -233,6 +274,34 @@ export default function SignupPage() {
                       </span>
                     </button>
                   </div>
+
+                  {/* Live password requirements checklist */}
+                  {showPasswordChecklist && (
+                    <ul id="password-requirements" className="mt-3 space-y-1.5" aria-live="polite">
+                      {passwordChecks.map((check) => (
+                        <li key={check.id} className="flex items-center gap-2 text-xs">
+                          <span
+                            className={`material-symbols-outlined text-base transition-colors ${
+                              check.met ? "text-green-600 dark:text-green-500" : "text-gray-300 dark:text-gray-600"
+                            }`}
+                            aria-hidden="true"
+                          >
+                            {check.met ? "check_circle" : "radio_button_unchecked"}
+                          </span>
+                          <span
+                            className={
+                              check.met
+                                ? "text-gray-700 dark:text-gray-300"
+                                : "text-gray-500 dark:text-gray-400"
+                            }
+                          >
+                            {check.label}
+                          </span>
+                          <span className="sr-only">{check.met ? " — met" : " — not met yet"}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
 
                 {/* Confirm Password */}
@@ -298,6 +367,8 @@ export default function SignupPage() {
                 </Link>
               </div>
             </form>
+              </>
+            )}
           </div>
         </div>
       </div>
