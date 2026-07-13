@@ -17,6 +17,28 @@ export async function getEmbedding(text: string): Promise<number[]> {
     return result.embeddings?.[0]?.values ?? [];
 }
 
+/**
+ * Embed many texts in a single API call. `gemini-embedding-001` accepts a batch
+ * of `contents` and returns one embedding per input, in order.
+ *
+ * This is ~50x faster than calling getEmbedding() per chunk: embedding a large
+ * manual one-chunk-at-a-time (with pacing) can exceed the 60s Cloud Run/Hosting
+ * request timeout and crash the upload. Batching keeps ingestion well within
+ * budget. Callers should page in groups of <= EMBED_BATCH_SIZE.
+ */
+export const EMBED_BATCH_SIZE = 50;
+
+export async function getEmbeddings(texts: string[]): Promise<number[][]> {
+    if (texts.length === 0) return [];
+    const result = await ai.models.embedContent({
+        model: "gemini-embedding-001",
+        contents: texts.map((t) => t.slice(0, 10000)),
+    });
+    const embeddings = result.embeddings ?? [];
+    // Map back to plain number[][], preserving input order and length.
+    return texts.map((_, i) => embeddings[i]?.values ?? []);
+}
+
 export function chunkText(text: string, chunkSize = 1500, overlap = 200): string[] {
     const chunks: string[] = [];
     let i = 0;

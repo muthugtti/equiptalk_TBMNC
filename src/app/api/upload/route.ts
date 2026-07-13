@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getStorageBucket, getDb } from "@/lib/firebase-admin";
 import { v4 as uuidv4 } from 'uuid';
 import { extractTextFromPdf, extractTextFromDocx } from '@/lib/text-extractor';
-import { getEmbedding, chunkText } from '@/lib/gemini';
+import { getEmbeddings, chunkText, EMBED_BATCH_SIZE } from '@/lib/gemini';
 import { requireAuth, isEquipmentOwnedBy } from "@/lib/auth";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { invalidateEquipmentCache } from "@/lib/semantic-cache";
@@ -95,34 +95,46 @@ export async function POST(req: NextRequest) {
                         text,
                         uploadedAt: new Date().toISOString()
                     });
-                    // Chunk + embed for RAG (committed in small batches to stay under
-                    // Firestore's per-request size limit, since embedding vectors are large)
+                    // Chunk + embed for RAG. Embeddings are computed in batches
+                    // (one API call per EMBED_BATCH_SIZE chunks) rather than one
+                    // call per chunk — the per-chunk loop with pacing could run
+                    // past the 60s request timeout on large PDFs and crash the
+                    // upload. Firestore writes stay in small batches (20) to keep
+                    // each commit under the transaction size limit.
                     const chunks = chunkText(text);
-                    const BATCH_SIZE = 20;
-                    let batch = db.batch();
-                    let opsInBatch = 0;
-                    for (let i = 0; i < chunks.length; i++) {
-                        if (i > 0) await new Promise(r => setTimeout(r, 200));
-                        const embedding = await getEmbedding(chunks[i]);
-                        const chunkRef = db.collection('equipment_doc_chunks').doc();
-                        batch.set(chunkRef, {
-                            equipmentId,
-                            createdBy: auth.uid,
-                            docId: docRef.id,
-                            fileName: file.name,
-                            text: chunks[i],
-                            embedding,
-                            chunkIndex: i,
-                            createdAt: new Date().toISOString()
-                        });
-                        opsInBatch++;
-                        if (opsInBatch === BATCH_SIZE) {
-                            await batch.commit();
-                            batch = db.batch();
-                            opsInBatch = 0;
+                    const FIRESTORE_BATCH_SIZE = 20;
+                    for (let start = 0; start < chunks.length; start += EMBED_BATCH_SIZE) {
+                        const slice = chunks.slice(start, start + EMBED_BATCH_SIZE);
+                        const embeddings = await getEmbeddings(slice);
+
+                        let batch = db.batch();
+                        let opsInBatch = 0;
+                        for (let j = 0; j < slice.length; j++) {
+                            const chunkRef = db.collection('equipment_doc_chunks').doc();
+                            batch.set(chunkRef, {
+                                equipmentId,
+                                createdBy: auth.uid,
+                                docId: docRef.id,
+                                fileName: file.name,
+                                text: slice[j],
+                                embedding: embeddings[j] ?? [],
+                                chunkIndex: start + j,
+                                createdAt: new Date().toISOString()
+                            });
+                            opsInBatch++;
+                            if (opsInBatch === FIRESTORE_BATCH_SIZE) {
+                                await batch.commit();
+                                batch = db.batch();
+                                opsInBatch = 0;
+                            }
+                        }
+                        if (opsInBatch > 0) await batch.commit();
+
+                        // Gentle pacing between embed batches to respect rate limits.
+                        if (start + EMBED_BATCH_SIZE < chunks.length) {
+                            await new Promise(r => setTimeout(r, 200));
                         }
                     }
-                    if (opsInBatch > 0) await batch.commit();
                     // New document changes what the AI knows — invalidate cached answers
                     invalidateEquipmentCache(equipmentId).catch(e =>
                         console.error("[Upload] Cache invalidation failed:", e)
