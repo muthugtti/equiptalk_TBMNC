@@ -4,7 +4,7 @@ import { getGeminiModel, getEmbedding, cosineSimilarity, buildSystemInstruction 
 import { getDb } from "@/lib/firebase-admin";
 import { requireAuth } from "@/lib/auth";
 import { checkRateLimit } from "@/lib/rate-limit";
-import { checkSemanticCache, storeSemanticCache } from "@/lib/semantic-cache";
+import { checkSemanticCache, storeSemanticCache, getSimilarNegatives } from "@/lib/semantic-cache";
 
 const TOP_K = 5;
 const CHAT_RATE_LIMIT = { maxAttempts: 30, windowMs: 15 * 60 * 1000, lockoutMs: 5 * 60 * 1000 };
@@ -138,6 +138,13 @@ export async function POST(req: NextRequest) {
             ragMode = "error";
         }
 
+        // 3b. Learning loop: pull past answers users flagged unhelpful for
+        // similar questions so the prompt can steer the model away from them.
+        let negativeExamples: Array<{ question: string; answer: string }> = [];
+        if (queryEmbedding.length > 0) {
+            negativeExamples = await getSimilarNegatives(equipmentId, queryEmbedding).catch(() => []);
+        }
+
         // 4. Build system prompt with retrieved context + per-equipment config
         const systemInstruction = buildSystemInstruction({
             equipmentLabel: (equip.name as string) || `equipment ${equipmentId}`,
@@ -145,6 +152,7 @@ export async function POST(req: NextRequest) {
             persona: equip.persona as string | undefined,
             responseStyle: equip.responseStyle as string | undefined,
             customInstructions: equip.customInstructions as string | undefined,
+            negativeExamples,
         });
 
         // 5. Build chat history
@@ -195,6 +203,10 @@ export async function POST(req: NextRequest) {
                             priority: call.args.priority?.toLowerCase() ?? "medium",
                             status: "open",
                             source: "AI_CHAT",
+                            // Scope the ticket to the signed-in user, otherwise GET
+                            // /api/incidents (which filters by createdBy) hides it and
+                            // the ticket never appears in the Incidents tab.
+                            createdBy: auth.uid,
                             createdAt: new Date().toISOString(),
                             updatedAt: new Date().toISOString(),
                         });

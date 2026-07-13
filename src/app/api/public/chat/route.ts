@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getGeminiModel, getEmbedding, cosineSimilarity, buildSystemInstruction } from "@/lib/gemini";
 import { getDb } from "@/lib/firebase-admin";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
-import { checkSemanticCache, storeSemanticCache } from "@/lib/semantic-cache";
+import { checkSemanticCache, storeSemanticCache, getSimilarNegatives } from "@/lib/semantic-cache";
 import { getPublicEquipment, isValidLinkId } from "@/lib/public-equipment";
 import { requireAuth } from "@/lib/auth";
 
@@ -127,6 +127,13 @@ export async function POST(req: NextRequest) {
             ragMode = "error";
         }
 
+        // 3b. Learning loop: avoid repeating answers flagged unhelpful for
+        // similar questions (shared per-equipment with the authenticated chat).
+        let negativeExamples: Array<{ question: string; answer: string }> = [];
+        if (queryEmbedding.length > 0) {
+            negativeExamples = await getSimilarNegatives(equipmentId, queryEmbedding).catch(() => []);
+        }
+
         // 4. System prompt from the equipment's agent configuration
         const systemInstruction = buildSystemInstruction({
             equipmentLabel: (equip.name as string) || "this equipment",
@@ -134,6 +141,7 @@ export async function POST(req: NextRequest) {
             persona: equip.persona as string | undefined,
             responseStyle: equip.responseStyle as string | undefined,
             customInstructions: equip.customInstructions as string | undefined,
+            negativeExamples,
         });
 
         const chatHistory = (history ?? []).map((msg: { role: string; message: string }) => ({
@@ -180,8 +188,11 @@ export async function POST(req: NextRequest) {
                             issueDescription: `${call.args.title}: ${call.args.description}`,
                             priority: call.args.priority?.toLowerCase() ?? "medium",
                             status: "open",
-                            // Reported by an anonymous technician via the public QR link.
+                            // Reported via the public QR link (still login-gated).
                             source: "AI_CHAT_PUBLIC",
+                            // Scope to the signed-in user so it shows in the Incidents
+                            // tab, which filters by createdBy.
+                            createdBy: auth.uid,
                             createdAt: new Date().toISOString(),
                             updatedAt: new Date().toISOString(),
                         });

@@ -9,6 +9,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { markdownComponents } from "@/components/chat/markdownComponents";
 import { typeStream } from "@/lib/stream-typewriter";
+import FeedbackBar from "@/components/chat/FeedbackBar";
 
 interface Message {
     id: string;
@@ -427,34 +428,47 @@ function ChatInterface() {
                         </div>
                     ) : null}
 
-                    {messages.map(msg => (
+                    {messages.map((msg, idx) => {
+                        // The question that produced a bot answer is the nearest
+                        // preceding user message — needed to attach feedback.
+                        const prevUserText = msg.role === "bot"
+                            ? messages.slice(0, idx).reverse().find(m => m.role === "user")?.text ?? ""
+                            : "";
+                        return (
                         <div key={msg.id} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                             {msg.role === "bot" && (
                                 <div className="w-7 h-7 rounded-full bg-[#1a1f37] flex items-center justify-center mr-2 mt-1 flex-shrink-0">
                                     <span className="material-symbols-outlined text-white text-sm">smart_toy</span>
                                 </div>
                             )}
-                            <div className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
-                                msg.role === "user"
-                                    ? "bg-[#1a1f37] text-white rounded-br-none"
-                                    : "bg-white border border-gray-200 text-gray-800 rounded-bl-none shadow-sm"
-                            }`}>
-                                {!msg.text ? (
-                                    <span className="flex gap-1 items-center text-gray-400">
-                                        <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:0ms]" />
-                                        <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:150ms]" />
-                                        <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:300ms]" />
-                                    </span>
-                                ) : msg.role === "bot" ? (
-                                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-                                        {msg.text}
-                                    </ReactMarkdown>
-                                ) : (
-                                    <span className="whitespace-pre-wrap">{msg.text}</span>
+                            <div className="flex flex-col max-w-[75%]">
+                                <div className={`rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+                                    msg.role === "user"
+                                        ? "bg-[#1a1f37] text-white rounded-br-none"
+                                        : "bg-white border border-gray-200 text-gray-800 rounded-bl-none shadow-sm"
+                                }`}>
+                                    {!msg.text ? (
+                                        <span className="flex gap-1 items-center text-gray-400">
+                                            <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:0ms]" />
+                                            <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:150ms]" />
+                                            <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:300ms]" />
+                                        </span>
+                                    ) : msg.role === "bot" ? (
+                                        <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                                            {msg.text}
+                                        </ReactMarkdown>
+                                    ) : (
+                                        <span className="whitespace-pre-wrap">{msg.text}</span>
+                                    )}
+                                </div>
+                                {/* Feedback only on completed bot answers (not the live-typing one). */}
+                                {msg.role === "bot" && msg.text && !isLoading && (
+                                    <FeedbackBar equipmentId={equipmentId} question={prevUserText} answer={msg.text} />
                                 )}
                             </div>
                         </div>
-                    ))}
+                        );
+                    })}
 
                     <div ref={messagesEndRef} />
                   </div>

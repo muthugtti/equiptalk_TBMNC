@@ -35,12 +35,21 @@ interface EquipmentBreakdown {
     count: number;
 }
 
+interface FeedbackSummary {
+    up: number;
+    down: number;
+    report: number;
+    total: number;
+    satisfaction: number;
+}
+
 interface AnalyticsData {
     total: number;
     unique: number;
     topQuestions: TopQuestion[];
     recent: RecentQuestion[];
     equipmentBreakdown: EquipmentBreakdown[];
+    feedback?: FeedbackSummary;
 }
 
 interface Equipment {
@@ -233,6 +242,36 @@ export default function AnalyticsPage() {
                                     <span className="text-2xl font-bold text-gray-900 dark:text-white">
                                         {card.value}
                                         {card.suffix ?? ""}
+                                    </span>
+                                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                                        {card.label}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Response feedback (thumbs up / down / report) */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                            {[
+                                {
+                                    label: "Satisfaction",
+                                    value: data.feedback?.total ? `${data.feedback.satisfaction}%` : "—",
+                                    icon: "sentiment_satisfied",
+                                    color: "text-green-600",
+                                },
+                                { label: "Helpful", value: data.feedback?.up ?? 0, icon: "thumb_up", color: "text-green-600" },
+                                { label: "Not Helpful", value: data.feedback?.down ?? 0, icon: "thumb_down", color: "text-red-600" },
+                                { label: "Reported", value: data.feedback?.report ?? 0, icon: "flag", color: "text-amber-600" },
+                            ].map((card) => (
+                                <div
+                                    key={card.label}
+                                    className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 flex flex-col gap-1"
+                                >
+                                    <span className={`material-symbols-outlined text-xl ${card.color}`}>
+                                        {card.icon}
+                                    </span>
+                                    <span className="text-2xl font-bold text-gray-900 dark:text-white">
+                                        {card.value}
                                     </span>
                                     <span className="text-xs text-gray-500 dark:text-gray-400">
                                         {card.label}

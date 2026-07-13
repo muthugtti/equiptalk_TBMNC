@@ -87,3 +87,90 @@ export async function invalidateEquipmentCache(equipmentId: string): Promise<voi
         console.error('[SemanticCache] Invalidation failed:', err);
     }
 }
+
+// Negative examples (answers users marked unhelpful) live in a sibling namespace
+// so they can be similarity-searched without polluting the answer cache.
+const NEG_NAMESPACE = (equipmentId: string) => `${equipmentId}::neg`;
+// Looser than the cache-hit threshold: we want to catch *related* bad answers,
+// not just near-identical questions.
+const NEGATIVE_MATCH_THRESHOLD = 0.85;
+
+/**
+ * Drop the cached answer for a question the user marked unhelpful, so it is not
+ * replayed. Finds the closest cached entry to the question embedding and, if it
+ * clears the cache-hit threshold (i.e. it's the entry that would be served),
+ * deletes it. Best-effort — cache is never a correctness path.
+ */
+export async function invalidateCachedAnswer(
+    equipmentId: string,
+    embedding: number[]
+): Promise<void> {
+    const index = getIndex();
+    if (!index) return;
+    try {
+        const results = await index.namespace(equipmentId).query({
+            vector: truncate(embedding),
+            topK: 1,
+            includeMetadata: false,
+        });
+        const top = results[0];
+        if (top && top.score >= SIMILARITY_THRESHOLD) {
+            await index.namespace(equipmentId).delete(top.id as string);
+        }
+    } catch (err) {
+        console.error('[SemanticCache] invalidateCachedAnswer failed:', err);
+    }
+}
+
+/**
+ * Record a question/answer pair the user flagged as unhelpful, so future similar
+ * questions can steer away from the same mistake.
+ */
+export async function recordNegativeExample(
+    equipmentId: string,
+    embedding: number[],
+    question: string,
+    answer: string
+): Promise<void> {
+    const index = getIndex();
+    if (!index) return;
+    try {
+        await index.namespace(NEG_NAMESPACE(equipmentId)).upsert({
+            id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+            vector: truncate(embedding),
+            // Cap the stored answer so a single flag can't bloat the vector store.
+            metadata: { question, answer: answer.slice(0, 1200), flaggedAt: new Date().toISOString() },
+        });
+    } catch (err) {
+        console.error('[SemanticCache] recordNegativeExample failed:', err);
+    }
+}
+
+/**
+ * Retrieve previously-flagged unhelpful answers whose question resembles the
+ * current one, so the chat route can tell the model what to avoid.
+ */
+export async function getSimilarNegatives(
+    equipmentId: string,
+    embedding: number[],
+    limit = 3
+): Promise<Array<{ question: string; answer: string }>> {
+    const index = getIndex();
+    if (!index) return [];
+    try {
+        const results = await index.namespace(NEG_NAMESPACE(equipmentId)).query({
+            vector: truncate(embedding),
+            topK: limit,
+            includeMetadata: true,
+        });
+        return results
+            .filter(r => r.score >= NEGATIVE_MATCH_THRESHOLD && r.metadata?.answer)
+            .map(r => ({
+                question: (r.metadata?.question as string) ?? "",
+                answer: r.metadata!.answer as string,
+            }));
+    } catch (err) {
+        console.error('[SemanticCache] getSimilarNegatives failed:', err);
+        return [];
+    }
+}

@@ -2,6 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChatBubble, ChatMessage } from './ChatBubble';
 import { typeStream } from '@/lib/stream-typewriter';
+import FeedbackBar from './FeedbackBar';
 
 interface EquipmentChatProps {
     equipmentId: string;
@@ -95,9 +96,21 @@ export default function EquipmentChat({ equipmentId }: EquipmentChatProps) {
                     </div>
                 )}
 
-                {messages.map(msg => (
-                    <ChatBubble key={msg.id} message={msg} />
-                ))}
+                {messages.map((msg, idx) => {
+                    const prevUserText = msg.speaker === 'Bot'
+                        ? messages.slice(0, idx).reverse().find(m => m.speaker === 'User')?.text ?? ''
+                        : '';
+                    return (
+                        <div key={msg.id}>
+                            <ChatBubble message={msg} />
+                            {msg.speaker === 'Bot' && msg.text && !isLoading && (
+                                <div className="flex justify-start pl-1">
+                                    <FeedbackBar equipmentId={equipmentId} question={prevUserText} answer={msg.text} />
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
 
                 {isLoading && messages[messages.length - 1]?.speaker === 'User' && (
                     <div className="flex justify-start w-full">

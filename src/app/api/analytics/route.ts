@@ -89,12 +89,42 @@ export async function GET(req: NextRequest) {
         // Rows are already scoped to this account (userId === auth.uid).
         const recentRows = rows.slice(0, 50);
 
+        // Feedback aggregation (thumbs up / down / report), same account scoping
+        // and same optional equipment + time-range filters as the questions above.
+        let feedback = { up: 0, down: 0, report: 0, total: 0, satisfaction: 0 };
+        try {
+            const fbSnap = await db
+                .collection("chat_feedback")
+                .where("userId", "==", auth.uid)
+                .get();
+            let fbRows = fbSnap.docs.map(d => d.data() as {
+                equipmentId: string; rating: string; createdAt: string;
+            });
+            if (equipmentId) fbRows = fbRows.filter(r => r.equipmentId === equipmentId);
+            if (days) {
+                const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+                fbRows = fbRows.filter(r => String(r.createdAt ?? "") >= cutoff);
+            }
+            const up = fbRows.filter(r => r.rating === "up").length;
+            const down = fbRows.filter(r => r.rating === "down").length;
+            const report = fbRows.filter(r => r.rating === "report").length;
+            const rated = up + down; // satisfaction = share of up among up/down
+            feedback = {
+                up, down, report,
+                total: fbRows.length,
+                satisfaction: rated ? Math.round((up / rated) * 100) : 0,
+            };
+        } catch (e: any) {
+            console.error("[Analytics] Feedback aggregation failed:", e?.message);
+        }
+
         return NextResponse.json({
             total: rows.length,
             unique: freq.size,
             topQuestions,
             recent: recentRows,
             equipmentBreakdown,
+            feedback,
         });
     } catch (error: any) {
         console.error("[Analytics] Error:", error);

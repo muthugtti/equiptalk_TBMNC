@@ -66,7 +66,7 @@ export function cosineSimilarity(a: number[], b: number[]): number {
 
 const incidentFunctionDeclaration = {
     name: "create_incident",
-    description: "Report a new maintenance issue, defect, or incident for this equipment. Use this when the user mentions a problem that needs fixing.",
+    description: "Create a maintenance ticket/incident for this equipment. Call this whenever the user reports a fault, defect, or problem that needs fixing, OR explicitly asks to raise, open, log, file, or create a ticket / incident / issue / maintenance request (e.g. 'raise a ticket', 'log an issue', 'report a problem'). Prefer calling this tool over just replying in text when the user asks for a ticket.",
     parameters: {
         type: Type.OBJECT,
         properties: {
@@ -113,12 +113,21 @@ export function buildSystemInstruction(opts: {
     persona?: string;
     responseStyle?: string;
     customInstructions?: string;
+    /** Past answers users marked unhelpful for similar questions — the model is
+     *  told to avoid repeating them. Sourced from feedback (see chat-feedback). */
+    negativeExamples?: Array<{ question: string; answer: string }>;
 }): string {
-    const { equipmentLabel, context, persona, responseStyle, customInstructions } = opts;
+    const { equipmentLabel, context, persona, responseStyle, customInstructions, negativeExamples } = opts;
     const personaLine = persona ? `You are acting as: ${persona}. ` : "";
     const styleLine = responseStyle ? `Preferred response style: ${responseStyle}. ` : "";
     const customBlock = customInstructions?.trim()
         ? `\n\nAdditional instructions from the equipment owner (follow these unless they conflict with the rules above):\n${customInstructions.trim()}`
+        : "";
+    const negativeBlock = negativeExamples && negativeExamples.length > 0
+        ? `\n\nLearn from past feedback: users marked the following answers as unhelpful for similar questions. Do NOT repeat these mistakes — take a different, more accurate or more useful approach:\n` +
+          negativeExamples
+              .map((ex, i) => `${i + 1}. Question: "${ex.question}"\n   Unhelpful answer to avoid: "${ex.answer}"`)
+              .join("\n")
         : "";
 
     return `You are an expert technical assistant for ${equipmentLabel}.
@@ -129,7 +138,9 @@ Answer questions using ONLY the provided context excerpts below.
 - If the answer is NOT in the context, say "I don't have information about that in the uploaded documents."
 - Never hallucinate facts. You may use basic engineering principles to clarify concepts found in the docs.
 - Format responses in Markdown: use headings, bullet/numbered lists, and **bold** for key terms or values. Use tables when presenting structured/comparative data, and code blocks for any part numbers, commands, or settings.
-- When you use specific information from a document, add a brief inline citation like *(Source: filename)* directly after the relevant sentence. Do NOT add a "Sources" or "References" section at the end — sources are already appended automatically.${customBlock}
+- Do NOT cite sources inline (no "(Source: filename)"), and do NOT add a "Sources" or "References" section — the list of source documents is appended automatically after your answer, so any citation you write would be a duplicate.
+
+Raising tickets (separate from answering questions): if the user reports a fault or defect, or explicitly asks to raise/open/log/create a ticket or incident, call the create_incident tool. Provide a short title, a clear description of the problem drawn from what the user told you, and a priority (Low/Medium/High/Critical) based on safety and urgency. You may raise a ticket even for a problem that is not covered by the documents — this is not bound by the context-only rule above. If key details are missing you may ask one brief clarifying question first, but do not refuse a direct request to raise a ticket. After the ticket is created, confirm it to the user in one short sentence.${customBlock}${negativeBlock}
 
 Context:
 ${context || "No documents have been uploaded for this equipment yet."}`;
