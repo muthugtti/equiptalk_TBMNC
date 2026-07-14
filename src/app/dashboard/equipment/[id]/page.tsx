@@ -106,9 +106,14 @@ export default function EquipmentDetailPage({ params }: { params: Promise<{ id: 
             });
 
             if (!uploadRes.ok) {
-                const error = await uploadRes.json();
-                console.error("❌ Upload API Error:", error);
-                throw new Error(error.error || "Upload failed");
+                // The server can return a non-JSON body (e.g. a raw 500 when the
+                // function is OOM-killed), so read as text first, then try to
+                // parse an { error } message out of it.
+                const raw = await uploadRes.text().catch(() => "");
+                let message = `Upload failed (${uploadRes.status})`;
+                try { message = JSON.parse(raw).error || message; } catch {}
+                console.error("❌ Upload API Error:", uploadRes.status, raw);
+                throw new Error(message);
             }
             const uploadData = await uploadRes.json();
 
@@ -144,9 +149,14 @@ export default function EquipmentDetailPage({ params }: { params: Promise<{ id: 
             });
 
             if (!uploadRes.ok) {
-                const error = await uploadRes.json();
-                console.error("❌ Upload API Error:", error);
-                throw new Error(error.error || "Upload failed");
+                // The server can return a non-JSON body (e.g. a raw 500 when the
+                // function is OOM-killed), so read as text first, then try to
+                // parse an { error } message out of it.
+                const raw = await uploadRes.text().catch(() => "");
+                let message = `Upload failed (${uploadRes.status})`;
+                try { message = JSON.parse(raw).error || message; } catch {}
+                console.error("❌ Upload API Error:", uploadRes.status, raw);
+                throw new Error(message);
             }
             const uploadData = await uploadRes.json();
 
