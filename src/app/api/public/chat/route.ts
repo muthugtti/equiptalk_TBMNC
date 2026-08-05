@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getGeminiModel, getEmbedding, cosineSimilarity, buildSystemInstruction } from "@/lib/gemini";
+import { getGeminiModel, getEmbedding, cosineSimilarity, buildSystemInstruction, stripSourcesFooter } from "@/lib/gemini";
 import { getDb } from "@/lib/firebase-admin";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { checkSemanticCache, storeSemanticCache, getSimilarNegatives } from "@/lib/semantic-cache";
@@ -144,9 +144,11 @@ export async function POST(req: NextRequest) {
             negativeExamples,
         });
 
+        // Strip the Sources footer from prior assistant turns so the model doesn't
+        // imitate it and produce a duplicate footer.
         const chatHistory = (history ?? []).map((msg: { role: string; message: string }) => ({
             role: msg.role === "user" ? "user" : "model",
-            parts: [{ text: msg.message }],
+            parts: [{ text: msg.role === "user" ? msg.message : stripSourcesFooter(msg.message) }],
         }));
 
         const chat = getGeminiModel(systemInstruction, chatHistory, {
@@ -181,8 +183,11 @@ export async function POST(req: NextRequest) {
 
                     if (call?.name === "create_incident") {
                         hadFunctionCall = true;
-                        const incidentRef = await db.collection("incidents").add({
-                            displayId: `INC-${Date.now()}`,
+                        // Human-facing ticket number shown in the Incidents tab —
+                        // return this to the model so the id it quotes matches.
+                        const displayId = `INC-${Date.now()}`;
+                        await db.collection("incidents").add({
+                            displayId,
                             equipmentId,
                             equipmentName: (equip.name as string) ?? "Unknown Equipment",
                             issueDescription: `${call.args.title}: ${call.args.description}`,
@@ -201,7 +206,7 @@ export async function POST(req: NextRequest) {
                             message: [{
                                 functionResponse: {
                                     name: "create_incident",
-                                    response: { success: true, incidentId: incidentRef.id },
+                                    response: { success: true, ticketId: displayId },
                                 },
                             }],
                         }));

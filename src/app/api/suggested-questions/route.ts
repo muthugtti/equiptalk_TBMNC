@@ -107,7 +107,12 @@ ${context}`;
             contents: prompt,
             config: {
                 temperature: 0.4,
-                maxOutputTokens: 512,
+                // gemini-2.5-flash is a thinking model: reasoning tokens draw from
+                // maxOutputTokens. Disable thinking (this task doesn't need it) and
+                // keep generous headroom so the JSON is never truncated — a too-low
+                // budget returns a cut-off, unparseable string.
+                thinkingConfig: { thinkingBudget: 0 },
+                maxOutputTokens: 1024,
                 responseMimeType: "application/json",
                 responseSchema: {
                     type: Type.ARRAY,

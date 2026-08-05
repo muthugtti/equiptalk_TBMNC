@@ -103,6 +103,21 @@ export const getGeminiModel = (
 };
 
 /**
+ * Strip the auto-appended "Sources" footer (and any duplicate copies) from an
+ * assistant message. The chat routes append a "---\n**Sources**…" block to every
+ * answer; that block is streamed to the client and echoed back as conversation
+ * history on the next turn. If left in the history, the model imitates it and
+ * writes its own Sources block, which the code then duplicates — producing two
+ * footers. Strip it from history so the model never sees a footer to copy.
+ *
+ * Anchored to the first "---\n**Sources**" marker through end-of-string, so it
+ * removes one or many stacked footers in a single pass.
+ */
+export function stripSourcesFooter(text: string): string {
+    return text.replace(/\n*---\n\*\*Sources\*\*[\s\S]*$/, "").trimEnd();
+}
+
+/**
  * Build the RAG chat system prompt, folding in the per-equipment agent config
  * (persona, response style, custom instructions). Shared by the authenticated
  * chat route and the public (QR) chat route so both behave identically.
