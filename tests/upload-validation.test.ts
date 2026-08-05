@@ -56,6 +56,48 @@ test("rejects a file over the 10MB limit with a 400 and size message", () => {
     assert.match(r.error, /10MB/);
 });
 
+/* ------------------------------------------------------------------ */
+/* Size limit — pin down the exact boundary, not just "too big fails". */
+/* The check is `size > MAX_FILE_SIZE`, so MAX_FILE_SIZE itself passes  */
+/* and the unit is binary MiB (10 * 1024 * 1024), not decimal MB.      */
+/* ------------------------------------------------------------------ */
+
+test("the limit is 10 MiB = 10,485,760 bytes (binary, not decimal 10,000,000)", () => {
+    assert.equal(MAX_FILE_SIZE, 10_485_760);
+});
+
+test("a file exactly at the limit is accepted (boundary is inclusive)", () => {
+    const r = validateUpload({ type: "application/pdf", size: MAX_FILE_SIZE, equipmentId: OK_EQUIP, name: "manual.pdf" });
+    assert.equal(r.ok, true, "size === MAX_FILE_SIZE must pass; the check is `>` not `>=`");
+});
+
+test("one byte over the limit is rejected", () => {
+    const r = validateUpload({ type: "application/pdf", size: MAX_FILE_SIZE + 1, equipmentId: OK_EQUIP, name: "manual.pdf" });
+    assert.equal(r.ok, false);
+});
+
+test("a 10,000,000-byte file passes (below the binary limit despite being '10MB' decimal)", () => {
+    const r = validateUpload({ type: "application/pdf", size: 10_000_000, equipmentId: OK_EQUIP, name: "manual.pdf" });
+    assert.equal(r.ok, true);
+});
+
+test("a zero-byte file is not rejected on size (no minimum is enforced)", () => {
+    // Characterization: there is no lower bound. An empty file uploads, extracts
+    // to "", and is skipped by the `if (text)` guard in the route — stored, not embedded.
+    const r = validateUpload({ type: "application/pdf", size: 0, equipmentId: OK_EQUIP, name: "empty.pdf" });
+    assert.equal(r.ok, true);
+});
+
+test("the size limit applies to every accepted type, images included", () => {
+    // One shared MAX_FILE_SIZE — no per-type override anywhere.
+    for (const type of ALLOWED_TYPES) {
+        const over = validateUpload({ type, size: MAX_FILE_SIZE + 1, equipmentId: OK_EQUIP });
+        assert.equal(over.ok, false, `${type} should be rejected over the limit`);
+        const at = validateUpload({ type, size: MAX_FILE_SIZE, equipmentId: OK_EQUIP });
+        assert.equal(at.ok, true, `${type} should be accepted at the limit`);
+    }
+});
+
 test("rejects when equipmentId is missing", () => {
     const r = validateUpload({ type: "application/pdf", size: 1000, equipmentId: null });
     assert.equal(r.ok, false);
