@@ -11,9 +11,7 @@ import { auth, googleProvider } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { evaluatePassword, isPasswordValid } from "@/lib/password-policy";
-import { requestSession, startMfaEnroll } from "@/lib/auth-client";
-import { MfaChallenge } from "@/components/auth/MfaChallenge";
-import { MfaSetup } from "@/components/auth/MfaSetup";
+import { requestSession } from "@/lib/auth-client";
 
 function friendlySignupError(code: string): string {
   switch (code) {
@@ -37,18 +35,11 @@ export default function SignupPage() {
   const [passwordFocused, setPasswordFocused] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  // Two-factor is required for everyone, so a brand-new account goes straight
-  // into authenticator setup after it's created.
-  const [step, setStep] = useState<"credentials" | "otp" | "enroll">("credentials");
-  const [pendingIdToken, setPendingIdToken] = useState("");
-  const [enrollData, setEnrollData] = useState<{ otpauthUrl: string; secret: string } | null>(null);
   const router = useRouter();
 
-  // Shared branch after any successful Firebase auth (email or Google): decide
-  // whether to enroll a new authenticator or challenge for a code. No session
-  // cookie exists until the code is verified server-side.
+  // Shared branch after any successful Firebase auth (email or Google): trade
+  // the ID token for the session cookie, then land on the dashboard.
   const proceedWithSession = async (idToken: string) => {
-    setPendingIdToken(idToken);
     const result = await requestSession(idToken);
     if (result.status === "ok") {
       router.push("/dashboard");
@@ -59,24 +50,7 @@ export default function SignupPage() {
       setLoading(false);
       return;
     }
-    if (result.status === "otp_required") {
-      setStep("otp");
-      setLoading(false);
-      return;
-    }
-    if (result.status === "enroll_required") {
-      const enroll = await startMfaEnroll(idToken);
-      if (!enroll.ok) {
-        setError(enroll.message);
-        setLoading(false);
-        return;
-      }
-      setEnrollData({ otpauthUrl: enroll.otpauthUrl, secret: enroll.secret });
-      setStep("enroll");
-      setLoading(false);
-      return;
-    }
-    setError("message" in result ? result.message : "Sign in failed. Please try again.");
+    setError(result.message);
     setLoading(false);
   };
 
@@ -161,17 +135,6 @@ export default function SignupPage() {
         {/* Right Panel: Form */}
         <div className="flex flex-1 flex-col justify-center items-center py-10 px-4 sm:px-6 lg:px-8 bg-background-light dark:bg-background-dark">
           <div className="w-full max-w-md space-y-8">
-            {step === "otp" ? (
-              <MfaChallenge idToken={pendingIdToken} onComplete={() => router.push("/dashboard")} />
-            ) : step === "enroll" && enrollData ? (
-              <MfaSetup
-                idToken={pendingIdToken}
-                otpauthUrl={enrollData.otpauthUrl}
-                secret={enrollData.secret}
-                onComplete={() => router.push("/dashboard")}
-              />
-            ) : (
-              <>
             {/* Tabs */}
             <div className="flex border-b border-gray-200 dark:border-gray-700 gap-8">
               <Link
@@ -367,8 +330,6 @@ export default function SignupPage() {
                 </Link>
               </div>
             </form>
-              </>
-            )}
           </div>
         </div>
       </div>

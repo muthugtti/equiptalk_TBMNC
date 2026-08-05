@@ -1,8 +1,8 @@
 import type { NextRequest } from "next/server";
 
 /**
- * Reject cross-origin state-changing requests. Shared by the auth routes so the
- * session and MFA endpoints apply the same CSRF check.
+ * Reject cross-origin state-changing requests. Shared by the auth routes so
+ * they all apply the same CSRF check.
  *
  * Firebase Hosting's CDN rewrites the Host header to Cloud Run's internal
  * address, so the original public hostname arrives in x-forwarded-host.

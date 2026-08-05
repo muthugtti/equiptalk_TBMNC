@@ -4,7 +4,7 @@ import * as admin from "firebase-admin";
 import { initAdmin } from "./firebase-admin";
 
 // Single source of truth for the session cookie, shared by every endpoint that
-// mints one (login and MFA-enrollment confirm) so the flags can never drift.
+// mints one so the flags can never drift.
 export const COOKIE_NAME = "__session";
 // 5-day session. Firebase session cookies max out at 14 days.
 export const SESSION_DURATION_MS = 5 * 24 * 60 * 60 * 1000;
