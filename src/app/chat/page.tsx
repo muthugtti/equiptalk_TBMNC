@@ -10,6 +10,7 @@ import { auth } from "@/lib/firebase";
 import { markdownComponents } from "@/components/chat/markdownComponents";
 import { typeStream } from "@/lib/stream-typewriter";
 import FeedbackBar from "@/components/chat/FeedbackBar";
+import MicButton from "@/components/chat/MicButton";
 
 interface Message {
     id: string;
@@ -485,6 +486,17 @@ function ChatInterface() {
                             placeholder={`Ask about ${equipment?.name ?? "this equipment"}…`}
                             disabled={isLoading}
                             className="flex-1 bg-gray-100 dark:bg-gray-800 border-0 rounded-full px-5 py-3 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
+                        />
+                        {/* Dictation: appends the transcript to whatever is already
+                            typed so a user can dictate onto a partial question.
+                            Never auto-sends — they review and press Send. */}
+                        <MicButton
+                            disabled={isLoading}
+                            className="w-11 h-11"
+                            onTranscript={(text) => {
+                                setInput(prev => (prev.trim() ? `${prev.trim()} ${text}` : text));
+                                inputRef.current?.focus();
+                            }}
                         />
                         <button
                             onClick={handleSend}

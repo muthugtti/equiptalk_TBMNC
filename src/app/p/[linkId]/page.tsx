@@ -9,6 +9,7 @@ import remarkGfm from "remark-gfm";
 import { markdownComponents } from "@/components/chat/markdownComponents";
 import { typeStream } from "@/lib/stream-typewriter";
 import FeedbackBar from "@/components/chat/FeedbackBar";
+import MicButton from "@/components/chat/MicButton";
 
 interface Message {
     id: string;
@@ -258,6 +259,21 @@ export default function PublicChatPage({ params }: { params: Promise<{ linkId: s
                             placeholder={`Ask about ${equipment.name}…`}
                             disabled={isLoading}
                             className="flex-1 bg-gray-100 border-0 rounded-full px-5 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
+                        />
+                        {/* Dictation on the QR surface. The scope doc excluded this
+                            page for having a "different auth model", but the public
+                            chat route is itself login-gated (requireAuth in
+                            /api/public/chat), so /api/transcribe works here
+                            unchanged — no anonymous Gemini spend is introduced.
+                            This is the hands-dirty-at-the-machine case dictation
+                            exists for. */}
+                        <MicButton
+                            disabled={isLoading}
+                            className="w-11 h-11"
+                            onTranscript={(text) => {
+                                setInput(prev => (prev.trim() ? `${prev.trim()} ${text}` : text));
+                                inputRef.current?.focus();
+                            }}
                         />
                         <button
                             onClick={handleSend}

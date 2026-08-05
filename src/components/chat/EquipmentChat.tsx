@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { ChatBubble, ChatMessage } from './ChatBubble';
 import { typeStream } from '@/lib/stream-typewriter';
 import FeedbackBar from './FeedbackBar';
+import MicButton from './MicButton';
 
 interface EquipmentChatProps {
     equipmentId: string;
@@ -13,6 +14,7 @@ export default function EquipmentChat({ equipmentId }: EquipmentChatProps) {
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -127,21 +129,35 @@ export default function EquipmentChat({ equipmentId }: EquipmentChatProps) {
             <div className="p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
                 <div className="relative flex items-center">
                     <input
+                        ref={inputRef}
                         type="text"
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
                         placeholder="Ask a question..."
                         disabled={isLoading}
-                        className="w-full bg-gray-100 dark:bg-gray-900 border-0 rounded-full pl-5 pr-12 py-3 focus:ring-2 focus:ring-blue-500 dark:text-white"
+                        // Extra right padding clears both the mic and send buttons.
+                        className="w-full bg-gray-100 dark:bg-gray-900 border-0 rounded-full pl-5 pr-24 py-3 focus:ring-2 focus:ring-blue-500 dark:text-white"
                     />
-                    <button
-                        onClick={handleSend}
-                        disabled={!input.trim() || isLoading}
-                        className="absolute right-2 p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:opacity-50 disabled:hover:bg-blue-600 transition-colors"
-                    >
-                        <span className="material-symbols-outlined text-sm">send</span>
-                    </button>
+                    <div className="absolute right-2 flex items-center gap-1">
+                        {/* Same dictation behavior as /chat: transcript is appended
+                            for review, never auto-sent. */}
+                        <MicButton
+                            disabled={isLoading}
+                            className="w-9 h-9"
+                            onTranscript={(text) => {
+                                setInput(prev => (prev.trim() ? `${prev.trim()} ${text}` : text));
+                                inputRef.current?.focus();
+                            }}
+                        />
+                        <button
+                            onClick={handleSend}
+                            disabled={!input.trim() || isLoading}
+                            className="w-9 h-9 flex items-center justify-center bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:opacity-50 disabled:hover:bg-blue-600 transition-colors"
+                        >
+                            <span className="material-symbols-outlined text-sm">send</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
