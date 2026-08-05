@@ -45,3 +45,10 @@ firebase-debug.log*
 
 # TestSprite MCP config (contains API key)
 .mcp.json
+
+# python (rag-api/) — virtualenvs are not relocatable, so they are recreated
+# locally from requirements.txt rather than committed
+venv/
+.venv/
+__pycache__/
+*.py[cod]
